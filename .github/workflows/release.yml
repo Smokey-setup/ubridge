@@ -164,7 +164,7 @@ jobs:
           tar -tzf setup-ubridge-*.tgz | grep -q 'package/ubridge.dll'
 
       - name: Publish npm package
-        run: npm publish --access public
+        run: npm stage publish
         env:
            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
