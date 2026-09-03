@@ -144,7 +144,7 @@ jobs:
           cp release-native/windows/ubridge.dll ./ubridge.dll
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -164,7 +164,7 @@ jobs:
           tar -tzf setup-ubridge-*.tgz | grep -q 'package/ubridge.dll'
 
       - name: Publish npm package
-        run: npm stage publish
+        run: npm publish --access public
         env:
            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
