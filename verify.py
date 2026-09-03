@@ -8,10 +8,10 @@ RESULT_FILE = os.path.join(ROOT, "asan_test_results.txt")
 
 def library_path():
     if sys.platform == "darwin":
-        return os.path.join(ROOT, "libubridge.dylib")
+        return os.path.join(ROOT, "ubridge", "libubridge.dylib")
     if sys.platform == "win32":
-        return os.path.join(ROOT, "ubridge.dll")
-    return os.path.join(ROOT, "libubridge.so")
+        return os.path.join(ROOT, "ubridge", "ubridge.dll")
+    return os.path.join(ROOT, "ubridge", "libubridge.so")
 
 def load_library():
     lib = ctypes.CDLL(library_path())
@@ -43,6 +43,19 @@ def load_library():
     lib.ub_string_free.argtypes = [ctypes.c_void_p]
     lib.ub_string_free.restype = None
 
+    # --- NEW V2.0.0 UPGRADE BINDINGS ---
+    lib.ub_scientific.argtypes = [ctypes.c_void_p, ctypes.c_int64, ctypes.c_int32]
+    lib.ub_scientific.restype = None
+
+    lib.ub_ring_init.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    lib.ub_ring_init.restype = ctypes.c_void_p
+
+    lib.ub_ring_push.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    lib.ub_ring_push.restype = ctypes.c_int
+
+    lib.ub_ring_pop.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    lib.ub_ring_pop.restype = ctypes.c_int
+
     return lib
 
 def process(lib, node):
@@ -60,21 +73,8 @@ def test_string_memory():
     lib = load_library()
 
     sizes = [
-        0,
-        1,
-        2,
-        3,
-        127,
-        128,
-        255,
-        256,
-        1023,
-        1024,
-        4095,
-        4096,
-        10000,
-        100000,
-        1048576
+        0, 1, 2, 3, 127, 128, 255, 256, 
+        1023, 1024, 4095, 4096, 10000, 100000, 1048576
     ]
 
     for size in sizes:
@@ -82,31 +82,25 @@ def test_string_memory():
         data = b"A" * size
 
         lib.ub_str(node, data)
-
         result = process(lib, node)
-
         lib.ub_free(node)
 
         assert "#SIG:" in result
 
 def test_string_replace_free():
     lib = load_library()
-
     node = lib.ub_create(3)
 
     for size in range(0, 10000, 137):
         data = bytes((i % 256 for i in range(size)))
         lib.ub_str(node, data)
-
         result = process(lib, node)
-
         assert "#SIG:" in result
 
     lib.ub_free(node)
 
 def test_array_memory():
     lib = load_library()
-
     arr = lib.ub_create(5)
 
     for i in range(10000):
@@ -115,33 +109,27 @@ def test_array_memory():
         lib.ub_array(arr, node)
 
     result = process(lib, arr)
-
     lib.ub_free(arr)
 
     assert "#SIG:" in result
 
 def test_object_memory():
     lib = load_library()
-
     obj = lib.ub_create(6)
 
     for i in range(5000):
         key = f"key_{i}".encode()
-
         node = lib.ub_create(1)
         lib.ub_int(node, i)
-
         lib.ub_object(obj, key, node)
 
     result = process(lib, obj)
-
     lib.ub_free(obj)
 
     assert "#SIG:" in result
 
 def test_nested_memory():
     lib = load_library()
-
     root = lib.ub_create(6)
     current = root
 
@@ -156,14 +144,12 @@ def test_nested_memory():
         current = child
 
     result = process(lib, root)
-
     lib.ub_free(root)
 
     assert "#SIG:" in result
 
 def test_cycle_memory():
     lib = load_library()
-
     root = lib.ub_create(5)
     child = lib.ub_create(5)
 
@@ -171,18 +157,15 @@ def test_cycle_memory():
     lib.ub_array(child, root)
 
     result = process(lib, root)
-
     lib.ub_free(root)
 
     assert "LOOP:" in result
 
 def test_mixed_memory():
     lib = load_library()
-
     root = lib.ub_create(6)
 
     null_node = lib.ub_create(0)
-
     int_node = lib.ub_create(1)
     lib.ub_int(int_node, -9223372036854775807 - 1)
 
@@ -196,7 +179,6 @@ def test_mixed_memory():
     lib.ub_int(bool_node, 1)
 
     array_node = lib.ub_create(5)
-
     for i in range(1000):
         item = lib.ub_create(1)
         lib.ub_int(item, i)
@@ -210,7 +192,6 @@ def test_mixed_memory():
     lib.ub_object(root, b"array", array_node)
 
     result = process(lib, root)
-
     lib.ub_free(root)
 
     assert "#SIG:" in result
@@ -220,22 +201,15 @@ def test_repeated_lifecycle():
 
     for cycle in range(20000):
         node = lib.ub_create(3)
-
-        data = bytes(
-            ((cycle * 31 + i * 17) % 256 for i in range(cycle % 512))
-        )
-
+        data = bytes(((cycle * 31 + i * 17) % 256 for i in range(cycle % 512)))
         lib.ub_str(node, data)
-
         result = process(lib, node)
-
         lib.ub_free(node)
 
         assert "#SIG:" in result
 
 def test_large_nested():
     lib = load_library()
-
     root = lib.ub_create(5)
     current = root
 
@@ -249,7 +223,6 @@ def test_large_nested():
     lib.ub_array(current, value)
 
     result = process(lib, root)
-
     lib.ub_free(root)
 
     assert "#SIG:" in result
@@ -262,67 +235,41 @@ def test_fuzz_memory():
 
         if node_type == 0:
             node = lib.ub_create(0)
-
         elif node_type == 1:
             node = lib.ub_create(1)
-            lib.ub_int(
-                node,
-                ((iteration * 1103515245) & 0xFFFFFFFF) - 2147483648
-            )
-
+            lib.ub_int(node, ((iteration * 1103515245) & 0xFFFFFFFF) - 2147483648)
         elif node_type == 2:
             node = lib.ub_create(2)
-            lib.ub_float(
-                node,
-                ((iteration % 100000) - 50000) / 37.0
-            )
-
+            lib.ub_float(node, ((iteration % 100000) - 50000) / 37.0)
         elif node_type == 3:
             node = lib.ub_create(3)
             size = (iteration * 97) % 4096
-            data = bytes(
-                ((iteration + i * 13) % 256 for i in range(size))
-            )
+            data = bytes(((iteration + i * 13) % 256 for i in range(size)))
             lib.ub_str(node, data)
-
         elif node_type == 4:
             node = lib.ub_create(4)
             lib.ub_int(node, iteration % 2)
-
         elif node_type == 5:
             node = lib.ub_create(5)
-
             for i in range(iteration % 25):
                 item = lib.ub_create(1)
                 lib.ub_int(item, i)
                 lib.ub_array(node, item)
-
         else:
             node = lib.ub_create(6)
-
             for i in range(iteration % 10):
                 item = lib.ub_create(1)
                 lib.ub_int(item, i)
                 lib.ub_object(node, f"k{i}".encode(), item)
 
         result = process(lib, node)
-
         lib.ub_free(node)
 
         assert "#SIG:" in result
 
 def test_signature_stability():
     lib = load_library()
-
-    values = [
-        b"",
-        b"A",
-        b"AB",
-        b"ABC",
-        b"A" * 127,
-        b"B" * 1024,
-        b"C" * 100000
-    ]
+    values = [b"", b"A", b"AB", b"ABC", b"A" * 127, b"B" * 1024, b"C" * 100000]
 
     for data in values:
         node = lib.ub_create(3)
@@ -331,7 +278,6 @@ def test_signature_stability():
         first = process(lib, node)
         second = process(lib, node)
         third = process(lib, node)
-
         lib.ub_free(node)
 
         assert first == second
@@ -339,11 +285,8 @@ def test_signature_stability():
 
 def test_free_graph():
     lib = load_library()
-
     root = lib.ub_create(5)
-
     shared = lib.ub_create(6)
-
     value1 = lib.ub_create(1)
     value2 = lib.ub_create(3)
 
@@ -357,10 +300,55 @@ def test_free_graph():
     lib.ub_array(root, shared)
 
     result = process(lib, root)
-
     lib.ub_free(root)
 
     assert "#SIG:" in result
+
+# --- NEW V2.0.0 UPGRADE TESTS ---
+
+def test_scientific_precision():
+    """Validates IEEE 754 float drift bypass using the scientific notation engine."""
+    lib = load_library()
+    node = lib.ub_create(2)
+    lib.ub_scientific(node, 123456789456, -18)
+    
+    result = process(lib, node)
+    lib.ub_free(node)
+
+    assert "S:C:123456789456:E:-18" in result
+    assert "#SIG:" in result
+
+def test_atomic_spsc_ring():
+    """Validates zero-copy atomic SPSC shared memory ring buffer IPC pushes and pops."""
+    lib = load_library()
+    
+    # Allocate shared RAM buffer for 16 nodes
+    capacity = 16
+    buf_size = 65536
+    raw_buffer = ctypes.create_string_buffer(buf_size)
+    
+    ring_ptr = lib.ub_ring_init(raw_buffer, capacity)
+    assert ring_ptr is not None
+
+    # Push integers into the ring
+    for i in range(8):
+        node = lib.ub_create(1)
+        lib.ub_int(node, i * 1337)
+        success = lib.ub_ring_push(ring_ptr, node)
+        lib.ub_free(node)
+        assert success == 1
+
+    # Pop and verify integrity
+    for i in range(8):
+        out_node = lib.ub_create(0)
+        success = lib.ub_ring_pop(ring_ptr, out_node)
+        assert success == 1
+
+        result = process(lib, out_node)
+        lib.ub_free(out_node)
+
+        assert f"I:{i * 1337};" in result
+        assert "#SIG:" in result
 
 TESTS = [
     ("string_memory", test_string_memory),
@@ -375,6 +363,8 @@ TESTS = [
     ("fuzz_memory", test_fuzz_memory),
     ("signature_stability", test_signature_stability),
     ("free_graph", test_free_graph),
+    ("scientific_precision", test_scientific_precision),
+    ("atomic_spsc_ring", test_atomic_spsc_ring),
 ]
 
 def child_mode(case_name):
@@ -389,7 +379,7 @@ def child_mode(case_name):
 
 def run_parent():
     with open(RESULT_FILE, "w", encoding="utf-8") as results:
-        results.write("UBRIDGE ADDRESSSANITIZER MEMORY SAFETY TEST RESULTS\n")
+        results.write("UBRIDGE V2.0.0 ADDRESSSANITIZER & IPC TEST RESULTS\n")
         results.write("=" * 64 + "\n\n")
 
         passed = 0
@@ -411,9 +401,7 @@ def run_parent():
                 env=env
             )
 
-            combined = (
-                completed.stdout + "\n" + completed.stderr
-            ).lower()
+            combined = (completed.stdout + "\n" + completed.stderr).lower()
 
             if completed.returncode == 0:
                 status = "PASS"
@@ -469,7 +457,7 @@ def run_parent():
         elif failed:
             results.write("\nFAILURE: One or more memory-safety tests failed.\n")
         else:
-            results.write("\nALL ADDRESSSANITIZER TESTS PASSED.\n")
+            results.write("\nALL UBRIDGE V2.0.0 TESTS PASSED.\n")
 
     print()
     print(f"Results written to: {RESULT_FILE}")
