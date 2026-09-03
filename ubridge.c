@@ -4,19 +4,46 @@
 #include <string.h>
 #include <math.h>
 
-// Global configuration constants for micro-packing layers
 static const char B64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+// Endianness Normalization Layer (Handles cross-CPU network architecture byte shifts)
+static uint64_t u_network_bytes(uint64_t val) {
+    uint32_t num = 1;
+    if (*(char*)&num == 1) { // Detects if the current host CPU is Little-Endian
+        return (((val & 0x00000000000000FFULL) << 56) |
+                ((val & 0x000000000000FF00ULL) << 40) |
+                ((val & 0x0000000000FF0000ULL) << 24) |
+                ((val & 0x00000000FF000000ULL) << 8)  |
+                ((val & 0x000000FF00000000ULL) >> 8)  |
+                ((val & 0x0000FF0000000000ULL) >> 24) |
+                ((val & 0x00FF000000000000ULL) >> 40) |
+                ((val & 0xFF00000000000000ULL) >> 56));
+    }
+    return val;
+}
 
 EXPORT UNode* u_create(uint8_t type) {
     UNode* node = (UNode*)calloc(1, sizeof(UNode));
     if (!node) return NULL;
     node->type = type;
-    node->mem_id = (uintptr_t)node; // Store unique memory reference address
+    node->mem_id = (uintptr_t)node;
     return node;
 }
 
-EXPORT void u_int(UNode* node, int64_t val) { if (node) node->int_val = val; }
-EXPORT void u_float(UNode* node, double val) { if (node) node->float_val = val; }
+EXPORT void u_int(UNode* node, int64_t val) {
+    if (node) {
+        // Enforce network byte order on numbers before storage
+        union { int64_t i; uint64_t u; } convert;
+        convert.i = val;
+        convert.u = u_network_bytes(convert.u);
+        node->int_val = convert.i;
+    }
+}
+
+EXPORT void u_float(UNode* node, double val) {
+    if (node) node->float_val = val;
+}
+
 EXPORT void u_str(UNode* node, const char* val) {
     if (!node || !val) return;
     node->str_val = strdup(val);
@@ -38,7 +65,6 @@ EXPORT void u_object(UNode* obj_node, const char* key, UNode* val_node) {
     obj_node->obj_vals[obj_node->obj_len - 1] = val_node;
 }
 
-// ⚡ Feature 2: High-Performance Native Base64 Micro-Packing Encoder
 static char* u_pack(const char* input, size_t len) {
     size_t out_len = 4 * ((len + 2) / 3);
     char* res = (char*)malloc(out_len + 1);
@@ -57,7 +83,6 @@ static char* u_pack(const char* input, size_t len) {
     return res;
 }
 
-// ⚡ Feature 3: Cryptographic FNV-1a Payload Tamper Integrity Verification
 static uint32_t compute_fnv1a(const char* data, size_t len) {
     uint32_t hash = 2166136261U;
     for (size_t i = 0; i < len; i++) {
@@ -67,13 +92,11 @@ static uint32_t compute_fnv1a(const char* data, size_t len) {
     return hash;
 }
 
-// Recursive streaming layer featuring Feature 1: Anti-Circular Graph Resolution
 static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintptr_t* history, size_t depth) {
     if (!node) return;
-    char tmp[512];
+    char tmp[256];
     int written = 0;
 
-    // Intercept circular pointer references immediately to avoid infinite crash loops
     for (size_t i = 0; i < depth; i++) {
         if (history[i] == node->mem_id) {
             written = snprintf(tmp, sizeof(tmp), "LOOP:%p;", (void*)node->mem_id);
@@ -86,7 +109,13 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
 
     switch (node->type) {
         case U_NULL:   written = snprintf(tmp, sizeof(tmp), "NIL;"); break;
-        case U_INT:    written = snprintf(tmp, sizeof(tmp), "I:%lld;", node->int_val); break;
+        case U_INT: {
+            union { int64_t i; uint64_t u; } convert;
+            convert.i = node->int_val;
+            convert.u = u_network_bytes(convert.u); // Read out in native layout
+            written = snprintf(tmp, sizeof(tmp), "I:%lld;", convert.i); 
+            break;
+        }
         case U_FLOAT: {
             double val = node->float_val;
             if (isnan(val)) written = snprintf(tmp, sizeof(tmp), "F:NAN;");
@@ -95,7 +124,6 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
             break;
         }
         case U_STRING: {
-            // Compress plain text data strings using the micro packing layer natively
             char* packed_str = u_pack(node->str_val, strlen(node->str_val));
             written = snprintf(tmp, sizeof(tmp), "P:%zu:%s;", strlen(packed_str), packed_str);
             free(packed_str);
@@ -145,7 +173,6 @@ EXPORT const char* u_process(UNode* root) {
     char* buf = (char*)malloc(cap);
     buf[0] = '\0';
     
-    // Safety buffer track allocation mapping to block structural loops
     uintptr_t* history = (uintptr_t*)calloc(1024, sizeof(uintptr_t));
     u_serialize(root, &buf, &cap, &len, history, 0);
     free(history);
