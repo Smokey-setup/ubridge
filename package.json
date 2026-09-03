@@ -5,10 +5,16 @@
   "main": "index.js",
   "files": [
     "index.js",
-    "libubridge.so",
-    "libubridge.dylib",
-    "ubridge.dll"
+    "ubridge.h",
+    "ubridge.c",
+    "Makefile",
+    "*.so",
+    "*.dylib",
+    "*.dll"
   ],
+  "scripts": {
+    "build": "make"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Smokey-setup/ubridge.git"
@@ -18,11 +24,15 @@
     "serialization",
     "ieee754",
     "cross-platform",
-    "performance"
+    "performance",
+    "native"
   ],
   "author": "Smokey-setup",
   "license": "MIT",
   "dependencies": {
     "@napi-ffi/ffi-napi": "^4.0.7"
+  },
+  "devDependencies": {
+    "node-gyp": "^10.0.0"
   }
 }
