@@ -2,75 +2,89 @@
 
 A zero-dependency, ultra-performance cross-language data serialization bridge solving IEEE 754 drift and structural engine bugs natively via raw C-ABI memory routing.
 
-## 🛠️ Prerequisites & Compilation
+---
 
-Before your high-level language runtime can call the `ubridge` interface core, you must compile the C source files into a shared machine binary native to your server operating system.
+## 🛠️ How to Compile
 
-### Build Tool Requirements
-* **GCC or Clang compiler** installed on your system path.
-* **Make utility** installed.
+Before your language can talk to the engine, compile the C source files into raw machine instructions.
 
-### Execution Command
-Open your terminal inside the repository root directory and run the compilation layer:
+### System Requirements
+* **GCC compiler** installed.
+* **Make tool** installed.
+
+### Build Command
+Run this command in your repository terminal:
 ```bash
 make
 ```
-This instantly generates a high-speed library file (`libubridge.so` on Linux, `libubridge.dylib` on macOS, or `libubridge.dll` on Windows) which handles high-velocity data parsing across language runtimes.
+This instantly builds your shared system binary code (`libubridge.so` on Linux, `libubridge.dylib` on macOS, or `libubridge.dll` on Windows).
 
 ---
 
-## 🧬 Core API Engine Interface Mapping
+## 🧬 Engine Core Blueprint
 
-Your library exposes raw memory doors via the standard C Binary Interface. Developers interact with the data node lifecycle using these core methods:
+Your library exposes clear, simple doors to manage raw data structures directly inside system memory:
 
-* **`u_create(uint8_t type)`**: Allocates an isolated, type-specific data node block straight onto the system heap.
-* **`u_int(UNode* node, int64_t val)`**: Formats and locks a 64-bit integer into a protected system byte structure.
-* **`u_float(UNode* node, double val)`**: Normalizes decimal fractions, neutralizing computer-level float inaccuracies down to deterministic parameters.
-* **`u_str(UNode* node, const char* val)`**: Dynamically maps plain text layers into compressed byte buffers.
-* **`u_array(UNode* arr_node, UNode* item_node)`**: Appends data nodes together to build deep collection arrays.
-* **`u_object(UNode* obj_node, const char* key, UNode* val_node)`**: Lexicographically structures key-value dictionary bindings.
-* **`u_process(UNode* root)`**: Encodes the structural object graph into an optimized format featuring tamper protection.
-* **`u_free(UNode* root)`**: Reclaims memory blocks to eliminate RAM leaks and bloat.
+* **`ub_create`**: Spawns a brand-new data box on the system heap.
+* **`ub_int`**: Safely packs a whole number into memory.
+* **`ub_float`**: Corrects precision anomalies to keep decimals pure.
+* **`ub_str`**: Converts text arrays into compressed byte blocks.
+* **`ub_array`**: Links multiple memory data boxes together like a chain.
+* **`ub_object`**: Creates alphabetized dictionary maps out of messy keys.
+* **`ub_process`**: Finalizes data with anti-loop security and signatures.
+* **`ub_free`**: Safely wipes memory blocks to avoid server RAM bloat.
 
 ---
 
-## 💻 Language Execution Blueprints
+## 💻 Language Blueprints
 
-Developers can seamlessly open the core engine gateway from any programming language environment using native interop frameworks:
+Choose your language engine below. Follow the human-friendly explanation to link your code directly to the hardware core.
 
 ### 1. Python (via `ctypes`)
+**Human Explanation**: Python loads the binary, sets up voice channels using ctypes, builds a floating-point data box, fixes any decimal bugs, and safely clears the computer memory cache when finished.
 ```python
 import ctypes
 
+# Load the compiled machine binary
 lib = ctypes.CDLL('./libubridge.so')
-lib.u_create.restype = ctypes.c_void_p
-lib.u_process.restype = ctypes.c_char_p
+lib.ub_create.restype = ctypes.c_void_p
+lib.ub_process.restype = ctypes.c_char_p
 
-# Create float node and process payload safely
-node = lib.u_create(2)  # Type U_FLOAT = 2
-lib.u_float(ctypes.c_void_p(node), ctypes.c_double(0.1 + 0.2))
-print(lib.u_process(ctypes.c_void_p(node)).decode())
-lib.u_free(ctypes.c_void_p(node))
+# Pass your dynamic calculations straight to the metal
+node = lib.ub_create(2)  # 2 tells the engine to accept a float
+lib.ub_float(ctypes.c_void_p(node), ctypes.c_double(0.1 + 0.2))
+
+# Extract your tamper-proof text payload signature
+print(lib.ub_process(ctypes.c_void_p(node)).decode())
+
+# Clear your server memory spaces completely
+lib.ub_free(ctypes.c_void_p(node))
 ```
 
 ### 2. Node.js / TypeScript (via `ffi-napi`)
+**Human Explanation**: Node bridges your JavaScript calculations straight to the native library. It builds data packets on the fly and wipes the system heap afterwards to prevent slow performance loops.
 ```javascript
 const ffi = require('ffi-napi');
 
+// Declare function access channels
 const lib = ffi.Library('./libubridge.so', {
-  'u_create': ['pointer', ['uint8']],
-  'u_float': ['void', ['pointer', 'double']],
-  'u_process': ['string', ['pointer']],
-  'u_free': ['void', ['pointer']]
+  'ub_create': ['pointer', ['uint8']],
+  'ub_float': ['void', ['pointer', 'double']],
+  'ub_process': ['string', ['pointer']],
+  'ub_free': ['void', ['pointer']]
 });
 
-const node = lib.u_create(2);
-lib.u_float(node, 0.1 + 0.2);
-console.log(lib.u_process(node));
-lib.u_free(node);
+// Build and process custom data tokens
+const node = lib.ub_create(2);
+lib.ub_float(node, 0.1 + 0.2);
+console.log(lib.ub_process(node));
+
+// Wipe memory allocations instantly
+lib.ub_free(node);
 ```
 
 ### 3. Go (via Native Cgo Integration)
+**Human Explanation**: Go uses its internal compiler rules to directly overlay parameters onto your C engine library header, processing records at hardware speeds with no web format overhead.
 ```go
 package main
 /*
@@ -81,65 +95,75 @@ import "C"
 import "fmt"
 
 func main() {
-node := C.u_create(2)
-C.u_float(node, C.double(0.1+0.2))
-fmt.Println(C.GoString(C.u_process(node)))
-C.u_free(node)
+// Call your core binary engine gates cleanly
+node := C.ub_create(2)
+C.ub_float(node, C.double(0.1+0.2))
+
+// Convert machine memory pointers back to Go strings
+fmt.Println(C.GoString(C.ub_process(node)))
+C.ub_free(node)
 }
 ```
 
 ### 4. Rust (via Foreign Function Interface)
+**Human Explanation**: Rust leverages its unsafe memory block system to handshake with your C library symbols. It handles your low-level data structures with absolute performance safety.
 ```rust
 use std::ffi::{c_char, c_void, CStr};
 
 #[link(name = "ubridge")]
 extern "C" {
-    fn u_create(t: u8) -> *mut c_void;
-    fn u_float(node: *mut c_void, val: f64);
-    fn u_process(node: *mut c_void) -> *const c_char;
-    fn u_free(node: *mut c_void);
+    fn ub_create(t: u8) -> *mut c_void;
+    fn ub_float(node: *mut c_void, val: f64);
+    fn ub_process(node: *mut c_void) -> *const c_char;
+    fn ub_free(node: *mut c_void);
 }
 
 fn main() {
     unsafe {
-        let node = u_create(2);
-        u_float(node, 0.1 + 0.2);
-        let res = CStr::from_ptr(u_process(node)).to_str().unwrap();
+        // Run unthrottled hardware calls directly
+        let node = ub_create(2);
+        ub_float(node, 0.1 + 0.2);
+        
+        let res = CStr::from_ptr(ub_process(node)).to_str().unwrap();
         println!("{}", res);
-        u_free(node);
+        ub_free(node);
     }
 }
 ```
 
 ### 5. C# (.NET via `DllImport` P/Invoke)
+**Human Explanation**: C# triggers standard Windows and Linux internal system loaders to look up your engine files, map memory references, and read clean results with no cross-framework delay.
 ```csharp
 using System;
 using System.Runtime.InteropServices;
 
 public class Program {
     [DllImport("libubridge.so", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr u_create(byte type);
+    private static extern IntPtr ub_create(byte type);
 
     [DllImport("libubridge.so", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void u_float(IntPtr node, double val);
+    private static extern void ub_float(IntPtr node, double val);
 
     [DllImport("libubridge.so", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr u_process(IntPtr node);
+    private static extern IntPtr ub_process(IntPtr node);
 
     [DllImport("libubridge.so", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void u_free(IntPtr node);
+    private static extern void ub_free(IntPtr node);
 
     public static void Main() {
-        IntPtr node = u_create(2);
-        u_float(node, 0.1 + 0.2);
-        string output = Marshal.PtrToStringAnsi(u_process(node));
+        // Execute low-level library tasks via managed pointer windows
+        IntPtr node = ub_create(2);
+        ub_float(node, 0.1 + 0.2);
+        
+        string output = Marshal.PtrToStringAnsi(ub_process(node));
         Console.WriteLine(output);
-        u_free(node);
+        ub_free(node);
     }
 }
 ```
 
 ### 6. Java (via Project Panama Foreign Function API)
+**Human Explanation**: Java opens modern hardware avenues to directly lookup binary system addresses. It bypasses old sluggish legacy steps to read memory structures at native computer speeds.
 ```java
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
@@ -149,14 +173,16 @@ public class UBridgeJava {
         SymbolLookup lookup = SymbolLookup.libraryLookup("libubridge.so", Arena.global());
         Linker linker = Linker.nativeLinker();
 
-        MethodHandle uCreate = linker.downcallHandle(lookup.find("u_create").get(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE));
-        MethodHandle uFloat = linker.downcallHandle(lookup.find("u_float").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_DOUBLE));
-        MethodHandle uProcess = linker.downcallHandle(lookup.find("u_process").get(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
-        MethodHandle uFree = linker.downcallHandle(lookup.find("u_free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
+        MethodHandle uCreate = linker.downcallHandle(lookup.find("ub_create").get(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_BYTE));
+        MethodHandle uFloat = linker.downcallHandle(lookup.find("ub_float").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_DOUBLE));
+        MethodHandle uProcess = linker.downcallHandle(lookup.find("ub_process").get(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+        MethodHandle uFree = linker.downcallHandle(lookup.find("ub_free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
 
+        // Create data box maps via hardware lookup structures
         MemorySegment node = (MemorySegment) uCreate.invokeExact((byte) 2);
         uFloat.invokeExact(node, 0.1 + 0.2);
         MemorySegment resPtr = (MemorySegment) uProcess.invokeExact(node);
+        
         System.out.println(resPtr.reinterpret(Long.MAX_VALUE).getString(0));
         uFree.invokeExact(node);
     }
@@ -164,15 +190,18 @@ public class UBridgeJava {
 ```
 
 ### 7. C++ (via Native Linkage)
+**Human Explanation**: C++ imports your header file directly into its compilation cycle. It links straight to your functions without needing any interop translations or wrapper plugins.
 ```cpp
 #include "ubridge.h"
 #include <iostream>
 
 int main() {
-    UNode* node = u_create(2);
-    u_float(node, 0.1 + 0.2);
-    std::cout << u_process(node) << std::endl;
-    u_free(node);
+    // True native execution with absolute zero abstraction overhead
+    UNode* node = ub_create(2);
+    ub_float(node, 0.1 + 0.2);
+    
+    std::cout << ub_process(node) << std::endl;
+    ub_free(node);
     return 0;
 }
 ```
