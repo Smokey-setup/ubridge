@@ -158,10 +158,10 @@ jobs:
 
       - name: Verify npm package
         run: |
-          tar -tzf setup-ubridge-*.tgz
-          tar -tzf setup-ubridge-*.tgz | grep -q 'package/libubridge.so'
-          tar -tzf setup-ubridge-*.tgz | grep -q 'package/libubridge.dylib'
-          tar -tzf setup-ubridge-*.tgz | grep -q 'package/ubridge.dll'
+          tar -tzf set-up-ubridge-*.tgz
+          tar -tzf set-up-ubridge-*.tgz | grep -q 'package/libubridge.so'
+          tar -tzf set-up-ubridge-*.tgz | grep -q 'package/libubridge.dylib'
+          tar -tzf set-up-ubridge-*.tgz | grep -q 'package/ubridge.dll'
 
       - name: Publish npm package
         run: npm publish --access public
