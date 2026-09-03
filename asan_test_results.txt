@@ -1,0 +1,73 @@
+UBRIDGE ADDRESSSANITIZER MEMORY SAFETY TEST RESULTS
+================================================================
+
+[1] string_memory: CRASH (signal 6)
+stderr:
+==84291==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[2] string_replace_free: CRASH (signal 6)
+stderr:
+==84298==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[3] array_memory: CRASH (signal 6)
+stderr:
+==84311==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[4] object_memory: CRASH (signal 6)
+stderr:
+==84312==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[5] nested_memory: CRASH (signal 6)
+stderr:
+==84314==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[6] cycle_memory: CRASH (signal 6)
+stderr:
+==84315==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[7] mixed_memory: CRASH (signal 6)
+stderr:
+==84316==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[8] repeated_lifecycle: CRASH (signal 6)
+stderr:
+==84328==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[9] large_nested: CRASH (signal 6)
+stderr:
+==84337==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[10] fuzz_memory: CRASH (signal 6)
+stderr:
+==84340==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[11] signature_stability: CRASH (signal 6)
+stderr:
+==84341==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+[12] free_graph: CRASH (signal 6)
+stderr:
+==84342==ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
+
+----------------------------------------------------------------
+
+SUMMARY
+================================================================
+TOTAL:             12
+PASSED:            0
+FAILED:            0
+CRASHED:           12
+SANITIZER ERRORS:  0
+
+CRITICAL: Native crash detected.
