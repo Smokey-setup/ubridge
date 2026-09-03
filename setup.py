@@ -1,12 +1,12 @@
-from setuptools import setup, Extension
+from setuptools import setup
 
 setup(
     name="ubridge",
-    version="1.0.0",
-    description="Cross-language data serialization bridge natively solving IEEE 754 drift via C-ABI memory routing",
+    version="1.1.0",
+    description="Cross-language integer fixed-point serialization bridge natively resolving IEEE 754 drift.",
     author="Smokey-setup",
     packages=["."],
-    ext_modules=[Extension("libubridge", ["ubridge.c"])],
+    package_data={"": ["libubridge.so", "libubridge.dylib", "ubridge.dll"]},
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",

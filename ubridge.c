@@ -39,7 +39,10 @@ EXPORT void ub_int(UNode* node, int64_t val) {
 }
 
 EXPORT void ub_float(UNode* node, double val) {
-    if (node) node->float_val = val;
+    if (node) {
+        // Mathematically capture and freeze fractional coordinates as hard integers
+        node->float_scale_val = (int64_t)round(val * U_SCALE_FACTOR);
+    }
 }
 
 EXPORT void ub_str(UNode* node, const char* val) {
@@ -92,7 +95,7 @@ static uint32_t compute_fnv1a(const char* data, size_t len) {
 
 static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintptr_t* history, size_t depth) {
     if (!node) return;
-    char tmp[256] = {0};
+    char tmp[512] = {0};
     int written = 0;
 
     for (size_t i = 0; i < depth; i++) {
@@ -115,10 +118,10 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
             break;
         }
         case U_FLOAT: {
-            double val = node->float_val;
-            if (isnan(val)) written = snprintf(tmp, sizeof(tmp), "F:NAN;");
-            else if (isinf(val)) written = snprintf(tmp, sizeof(tmp), "F:INF;");
-            else written = snprintf(tmp, sizeof(tmp), "F:8:%.8f;", val);
+            // Re-render floating point string output by unpacking the integer scale factor safely
+            long long int_part = (long long)(node->float_scale_val / U_SCALE_FACTOR);
+            long long frac_part = (long long)(llabs(node->float_scale_val) % U_SCALE_FACTOR);
+            written = snprintf(tmp, sizeof(tmp), "F:8:%lld.%08lld;", int_part, frac_part);
             break;
         }
         case U_STRING: {
@@ -216,4 +219,8 @@ EXPORT void ub_free(UNode* root) {
     size_t count = 0;
     u_free_tracked(root, freed_history, &count);
     free(freed_history);
+}
+
+EXPORT void ub_string_free(char* ptr) {
+    if (ptr) free(ptr); // Destroys the leak trace vector created during u_process pipelines
 }
