@@ -1,4 +1,4 @@
-const ffi = require('ffi-napi');
+const ffi = require('@napi-ffi/ffi-napi');
 const path = require('path');
 const os = require('os');
 

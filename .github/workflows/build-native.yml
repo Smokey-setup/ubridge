@@ -1,0 +1,58 @@
+name: Build Native Libraries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: libubridge.so
+          - os: macos-latest
+            artifact: libubridge.dylib
+          - os: windows-latest
+            artifact: ubridge.dll
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Linux
+        if: runner.os == 'Linux'
+        run: make
+
+      - name: Build macOS
+        if: runner.os == 'macOS'
+        run: make
+
+      - name: Set up MSYS2
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-gcc make
+
+      - name: Build Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: gcc -O3 -Wall -shared -o ubridge.dll ubridge.c
+
+      - name: Verify native library
+        shell: bash
+        run: |
+          test -f "${{ matrix.artifact }}"
+
+      - name: Upload native library
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubridge-${{ runner.os }}
+          path: ${{ matrix.artifact }}
