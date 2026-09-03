@@ -12,13 +12,12 @@
 #define U_ARRAY   5
 #define U_OBJECT  6
 
-// Scale factor to convert float/double to exact fixed-point integer math (8 decimal places)
 #define U_SCALE_FACTOR 100000000LL
 
 typedef struct UNode {
     uint8_t type;
     int64_t int_val;
-    int64_t float_scale_val; // Replaced unsafe double storage with precise fixed-point scaling
+    int64_t float_scale_val;
     char* str_val;
     struct UNode** arr_vals;
     size_t arr_len;
@@ -42,6 +41,6 @@ EXPORT void ub_array(UNode* arr_node, UNode* item_node);
 EXPORT void ub_object(UNode* obj_node, const char* key, UNode* val_node);
 EXPORT const char* ub_process(UNode* root);
 EXPORT void ub_free(UNode* root);
-EXPORT void ub_string_free(char* ptr); // New exported function to stop memory leaks
+EXPORT void ub_string_free(char* ptr);
 
 #endif

@@ -2,12 +2,17 @@ const ffi = require('ffi-napi');
 const path = require('path');
 const os = require('os');
 
-// Automatically detect host runtime environment constraints
+let prefix = 'lib';
 let ext = '.so';
-if (os.platform() === 'darkwin' || os.platform() === 'darwin') ext = '.dylib';
-if (os.platform() === 'win32') ext = '.dll';
 
-const libPath = path.join(__dirname, `libubridge${ext}`);
+if (os.platform() === 'darwin') {
+  ext = '.dylib';
+} else if (os.platform() === 'win32') {
+  prefix = '';
+  ext = '.dll';
+}
+
+const libPath = path.join(__dirname, `${prefix}ubridge${ext}`);
 
 const lib = ffi.Library(libPath, {
   'ub_create': ['pointer', ['uint8']],
