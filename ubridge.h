@@ -31,7 +31,6 @@ typedef struct UNode {
     #define EXPORT __attribute__((visibility("default")))
 #endif
 
-// Added ub_ prefix to avoid operating system namespace clashes
 EXPORT UNode* ub_create(uint8_t type);
 EXPORT void ub_int(UNode* node, int64_t val);
 EXPORT void ub_float(UNode* node, double val);
