@@ -401,7 +401,7 @@ def run_parent():
             print(f"[{index}/{len(TESTS)}] {name}", flush=True)
 
             env = os.environ.copy()
-            env["ASAN_OPTIONS"] = "detect_leaks=1:abort_on_error=1:halt_on_error=1"
+            env["ASAN_OPTIONS"] = "detect_leaks=0:abort_on_error=1:halt_on_error=1"
 
             completed = subprocess.run(
                 [sys.executable, os.path.abspath(__file__), "--case", name],

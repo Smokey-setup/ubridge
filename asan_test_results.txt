@@ -1,277 +1,73 @@
 UBRIDGE ADDRESSSANITIZER MEMORY SAFETY TEST RESULTS
 ================================================================
 
-[1] string_memory: SANITIZER ERROR
+[1] string_memory: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88387==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x7efa67ba29c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x579778a936e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x579778a936e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x7efa67ba29c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x579778a936e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x579778a936e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[2] string_replace_free: SANITIZER ERROR
+[2] string_replace_free: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88391==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x7052a2a2a9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x64724cf276e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x64724cf276e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x7052a2a2a9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x64724cf276e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x64724cf276e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[3] array_memory: SANITIZER ERROR
+[3] array_memory: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88394==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x73a2764809c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5e57dc1d76e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5e57dc1d76e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x73a2764809c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5e57dc1d76e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5e57dc1d76e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[4] object_memory: SANITIZER ERROR
+[4] object_memory: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88409==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x7c609f67a9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5a36f4fdc6e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5a36f4fdc6e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x7c609f67a9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5a36f4fdc6e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5a36f4fdc6e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[5] nested_memory: SANITIZER ERROR
+[5] nested_memory: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88419==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x71d30a6279c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5fa18e1b06e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5fa18e1b06e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x71d30a6279c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5fa18e1b06e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5fa18e1b06e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[6] cycle_memory: SANITIZER ERROR
+[6] cycle_memory: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88433==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x7bafc51039c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5fa22945c6e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5fa22945c6e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x7bafc51039c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5fa22945c6e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5fa22945c6e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[7] mixed_memory: SANITIZER ERROR
+[7] mixed_memory: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88442==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x7ca89a9f79c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5933d8c476e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5933d8c476e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x7ca89a9f79c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x5933d8c476e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x5933d8c476e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[8] repeated_lifecycle: SANITIZER ERROR
+[8] repeated_lifecycle: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88445==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x73513b5ef9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x56f5a03286e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x56f5a03286e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x73513b5ef9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x56f5a03286e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x56f5a03286e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[9] large_nested: SANITIZER ERROR
+[9] large_nested: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88473==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x7b475bc8f9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x58c3c8f326e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x58c3c8f326e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x7b475bc8f9c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x58c3c8f326e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x58c3c8f326e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[10] fuzz_memory: SANITIZER ERROR
+[10] fuzz_memory: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88477==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x710cc97829c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x57401a9b66e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x57401a9b66e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x710cc97829c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x57401a9b66e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x57401a9b66e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[11] signature_stability: SANITIZER ERROR
+[11] signature_stability: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88480==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x742d897e79c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x57ce0247f6e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x57ce0247f6e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x742d897e79c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x57ce0247f6e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x57ce0247f6e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
-[12] free_graph: SANITIZER ERROR
+[12] free_graph: PASS
 stdout:
 PASS
-
-stderr:
-
-=================================================================
-==88484==ERROR: LeakSanitizer: detected memory leaks
-
-Direct leak of 29586 byte(s) in 14 object(s) allocated from:
-    #0 0x7bd2bc1779c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x626f2c3f96e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x626f2c3f96e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-Indirect leak of 81401 byte(s) in 92 object(s) allocated from:
-    #0 0x7bd2bc1779c7 in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
-    #1 0x626f2c3f96e2 in PyMem_RawMalloc Objects/obmalloc.c:662
-    #2 0x626f2c3f96e2 in _PyObject_Malloc Objects/obmalloc.c:1569
-
-SUMMARY: AddressSanitizer: 110987 byte(s) leaked in 106 allocation(s).
 
 ----------------------------------------------------------------
 
 SUMMARY
 ================================================================
 TOTAL:             12
-PASSED:            0
+PASSED:            12
 FAILED:            0
 CRASHED:           0
-SANITIZER ERRORS:  12
+SANITIZER ERRORS:  0
 
-CRITICAL: AddressSanitizer detected a memory-safety violation.
+ALL ADDRESSSANITIZER TESTS PASSED.
