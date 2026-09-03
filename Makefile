@@ -5,7 +5,7 @@ TARGET = libubridge.so
 all: $(TARGET)
 
 $(TARGET): ubridge.c ubridge.h
-$(CC) $(CFLAGS) -o $(TARGET) ubridge.c
+	$(CC) $(CFLAGS) -o $(TARGET) ubridge.c
 
 clean:
-rm -f $(TARGET)
+	rm -f $(TARGET)

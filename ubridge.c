@@ -6,10 +6,9 @@
 
 static const char B64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-// Endianness Normalization Layer (Handles cross-CPU network architecture byte shifts)
 static uint64_t u_network_bytes(uint64_t val) {
     uint32_t num = 1;
-    if (*(char*)&num == 1) { // Detects if the current host CPU is Little-Endian
+    if (*(char*)&num == 1) {
         return (((val & 0x00000000000000FFULL) << 56) |
                 ((val & 0x000000000000FF00ULL) << 40) |
                 ((val & 0x0000000000FF0000ULL) << 24) |
@@ -22,7 +21,7 @@ static uint64_t u_network_bytes(uint64_t val) {
     return val;
 }
 
-EXPORT UNode* u_create(uint8_t type) {
+EXPORT UNode* ub_create(uint8_t type) {
     UNode* node = (UNode*)calloc(1, sizeof(UNode));
     if (!node) return NULL;
     node->type = type;
@@ -30,9 +29,8 @@ EXPORT UNode* u_create(uint8_t type) {
     return node;
 }
 
-EXPORT void u_int(UNode* node, int64_t val) {
+EXPORT void ub_int(UNode* node, int64_t val) {
     if (node) {
-        // Enforce network byte order on numbers before storage
         union { int64_t i; uint64_t u; } convert;
         convert.i = val;
         convert.u = u_network_bytes(convert.u);
@@ -40,23 +38,23 @@ EXPORT void u_int(UNode* node, int64_t val) {
     }
 }
 
-EXPORT void u_float(UNode* node, double val) {
+EXPORT void ub_float(UNode* node, double val) {
     if (node) node->float_val = val;
 }
 
-EXPORT void u_str(UNode* node, const char* val) {
+EXPORT void ub_str(UNode* node, const char* val) {
     if (!node || !val) return;
     node->str_val = strdup(val);
 }
 
-EXPORT void u_array(UNode* arr_node, UNode* item_node) {
+EXPORT void ub_array(UNode* arr_node, UNode* item_node) {
     if (!arr_node || !item_node || arr_node->type != U_ARRAY) return;
     arr_node->arr_len++;
     arr_node->arr_vals = (UNode**)realloc(arr_node->arr_vals, arr_node->arr_len * sizeof(UNode*));
     arr_node->arr_vals[arr_node->arr_len - 1] = item_node;
 }
 
-EXPORT void u_object(UNode* obj_node, const char* key, UNode* val_node) {
+EXPORT void ub_object(UNode* obj_node, const char* key, UNode* val_node) {
     if (!obj_node || !key || !val_node || obj_node->type != U_OBJECT) return;
     obj_node->obj_len++;
     obj_node->obj_keys = (char**)realloc(obj_node->obj_keys, obj_node->obj_len * sizeof(char*));
@@ -94,7 +92,7 @@ static uint32_t compute_fnv1a(const char* data, size_t len) {
 
 static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintptr_t* history, size_t depth) {
     if (!node) return;
-    char tmp[256];
+    char tmp[256] = {0};
     int written = 0;
 
     for (size_t i = 0; i < depth; i++) {
@@ -112,8 +110,8 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
         case U_INT: {
             union { int64_t i; uint64_t u; } convert;
             convert.i = node->int_val;
-            convert.u = u_network_bytes(convert.u); // Read out in native layout
-            written = snprintf(tmp, sizeof(tmp), "I:%lld;", convert.i); 
+            convert.u = u_network_bytes(convert.u);
+            written = snprintf(tmp, sizeof(tmp), "I:%lld;", (long long)convert.i); 
             break;
         }
         case U_FLOAT: {
@@ -131,17 +129,17 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
         }
         case U_BOOL:   written = snprintf(tmp, sizeof(tmp), "B:%d;", node->int_val ? 1 : 0); break;
         case U_ARRAY:  written = snprintf(tmp, sizeof(tmp), "A:%zu[", node->arr_len); break;
-        case U_OBJECT: {
-            for (size_t i = 0; i < node->obj_len; i++) {
-                for (size_t j = i + 1; j < node->obj_len; j++) {
-                    if (strcmp(node->obj_keys[i], node->obj_keys[j]) > 0) {
-                        char* tk = node->obj_keys[i]; node->obj_keys[i] = node->obj_keys[j]; node->obj_keys[j] = tk;
-                        UNode* tv = node->obj_vals[i]; node->obj_vals[i] = node->obj_vals[j]; node->obj_vals[j] = tv;
-                    }
+        case U_OBJECT: written = snprintf(tmp, sizeof(tmp), "O:%zu{", node->obj_len); break;
+    }
+
+    if (node->type == U_OBJECT) {
+        for (size_t i = 0; i < node->obj_len; i++) {
+            for (size_t j = i + 1; j < node->obj_len; j++) {
+                if (strcmp(node->obj_keys[i], node->obj_keys[j]) > 0) {
+                    char* tk = node->obj_keys[i]; node->obj_keys[i] = node->obj_keys[j]; node->obj_keys[j] = tk;
+                    UNode* tv = node->obj_vals[i]; node->obj_vals[i] = node->obj_vals[j]; node->obj_vals[j] = tv;
                 }
             }
-            written = snprintf(tmp, sizeof(tmp), "O:%zu{", node->obj_len);
-            break;
         }
     }
 
@@ -167,7 +165,7 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
     }
 }
 
-EXPORT const char* u_process(UNode* root) {
+EXPORT const char* ub_process(UNode* root) {
     size_t cap = 2048;
     size_t len = 0;
     char* buf = (char*)malloc(cap);
@@ -178,7 +176,7 @@ EXPORT const char* u_process(UNode* root) {
     free(history);
     
     uint32_t signature = compute_fnv1a(buf, len);
-    char crypto_tag[32];
+    char crypto_tag[64] = {0};
     int crypt_len = snprintf(crypto_tag, sizeof(crypto_tag), "SIG:%08X", signature);
     
     buf = (char*)realloc(buf, len + crypt_len + 2);
@@ -188,20 +186,34 @@ EXPORT const char* u_process(UNode* root) {
     return buf;
 }
 
-EXPORT void u_free(UNode* root) {
+static void u_free_tracked(UNode* root, uintptr_t* freed_history, size_t* count) {
     if (!root) return;
+    for (size_t i = 0; i < *count; i++) {
+        if (freed_history[i] == root->mem_id) return;
+    }
+    freed_history[(*count)++] = root->mem_id;
+
     if (root->str_val) free(root->str_val);
     if (root->arr_vals) {
-        for (size_t i = 0; i < root->arr_len; i++) u_free(root->arr_vals[i]);
+        for (size_t i = 0; i < root->arr_len; i++) {
+            u_free_tracked(root->arr_vals[i], freed_history, count);
+        }
         free(root->arr_vals);
     }
     if (root->obj_vals) {
         for (size_t i = 0; i < root->obj_len; i++) {
             free(root->obj_keys[i]);
-            u_free(root->obj_vals[i]);
+            u_free_tracked(root->obj_vals[i], freed_history, count);
         }
         free(root->obj_keys);
         free(root->obj_vals);
     }
     free(root);
+}
+
+EXPORT void ub_free(UNode* root) {
+    uintptr_t* freed_history = (uintptr_t*)calloc(2048, sizeof(uintptr_t));
+    size_t count = 0;
+    u_free_tracked(root, freed_history, &count);
+    free(freed_history);
 }

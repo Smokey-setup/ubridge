@@ -31,13 +31,14 @@ typedef struct UNode {
     #define EXPORT __attribute__((visibility("default")))
 #endif
 
-EXPORT UNode* u_create(uint8_t type);
-EXPORT void u_int(UNode* node, int64_t val);
-EXPORT void u_float(UNode* node, double val);
-EXPORT void u_str(UNode* node, const char* val);
-EXPORT void u_array(UNode* arr_node, UNode* item_node);
-EXPORT void u_object(UNode* obj_node, const char* key, UNode* val_node);
-EXPORT const char* u_process(UNode* root);
-EXPORT void u_free(UNode* root);
+// Added ub_ prefix to avoid operating system namespace clashes
+EXPORT UNode* ub_create(uint8_t type);
+EXPORT void ub_int(UNode* node, int64_t val);
+EXPORT void ub_float(UNode* node, double val);
+EXPORT void ub_str(UNode* node, const char* val);
+EXPORT void ub_array(UNode* arr_node, UNode* item_node);
+EXPORT void ub_object(UNode* obj_node, const char* key, UNode* val_node);
+EXPORT const char* ub_process(UNode* root);
+EXPORT void ub_free(UNode* root);
 
 #endif
