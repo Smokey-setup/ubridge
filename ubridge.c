@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
 
 static const char B64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -84,7 +85,7 @@ static char* u_pack(const char* input, size_t len) {
         uint32_t triple = (octet_a << 16) + (octet_b << 8) + octet_c;
         res[j++] = B64[(triple >> 18) & 0x3F];
         res[j++] = B64[(triple >> 12) & 0x3F];
-        res[j++] = (i > len + 1) ? '=' : B64[(triple >> 6) & 0x3F];
+        res[j++] = (i - 1 > len) ? '=' : B64[(triple >> 6) & 0x3F];
         res[j++] = (i > len) ? '=' : B64[triple & 0x3F];
     }
     res[out_len] = '\0';
@@ -132,9 +133,9 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
             break;
         }
         case U_FLOAT: {
-            long long int_part = (long long)(node->float_scale_val / U_SCALE_FACTOR);
+            long long int_part = (long long)(llabs(node->float_scale_val) / U_SCALE_FACTOR);
             long long frac_part = (long long)(llabs(node->float_scale_val) % U_SCALE_FACTOR);
-            // 🛡️ Fix 1: Precise negative-sign normalization logic for values bounded within (-1.0, 0.0)
+            // Fix 1: Precise negative-sign normalization logic for values bounded within (-1.0, 0.0)
             if (node->float_scale_val < 0 && int_part == 0) {
                 written = snprintf(tmp, sizeof(tmp), "F:8:-0.%08lld;", frac_part);
             } else {
