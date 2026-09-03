@@ -53,8 +53,58 @@ jobs:
           name: native-${{ runner.os }}
           path: ${{ matrix.artifact }}
 
-  package:
-    name: Package Release
+  build-python:
+    name: Build Python wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: build-native
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download native library
+        uses: actions/download-artifact@v4
+        with:
+          name: native-${{ runner.os }}
+          path: native
+
+      - name: Prepare Python native library
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            cp native/libubridge.so ubridge/libubridge.so
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            cp native/libubridge.dylib ubridge/libubridge.dylib
+          else
+            cp native/ubridge.dll ubridge/ubridge.dll
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: python -m pip install --upgrade pip setuptools wheel build
+
+      - name: Build Python package
+        run: python -m build --wheel
+
+      - name: Upload Python wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-wheel-${{ runner.os }}
+          path: dist/*.whl
+
+  build-npm:
+    name: Build npm package
     runs-on: ubuntu-latest
     needs: build-native
 
@@ -80,25 +130,11 @@ jobs:
           name: native-Windows
           path: release-native/windows
 
-      - name: Assemble native libraries
+      - name: Assemble npm package
         run: |
           cp release-native/linux/libubridge.so ./libubridge.so
           cp release-native/macos/libubridge.dylib ./libubridge.dylib
           cp release-native/windows/ubridge.dll ./ubridge.dll
-          cp libubridge.so ubridge/libubridge.so
-          cp libubridge.dylib ubridge/libubridge.dylib
-          cp ubridge.dll ubridge/ubridge.dll
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install Python build tools
-        run: python -m pip install --upgrade pip setuptools wheel build
-
-      - name: Build Python package
-        run: python -m build
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -108,24 +144,18 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Build npm package
+      - name: Pack npm package
         run: npm pack
 
-      - name: Verify release contents
+      - name: Verify npm package
         run: |
-          echo "Python distributions:"
-          ls -lh dist/
+          tar -tzf ubridge-*.tgz
+          tar -tzf ubridge-*.tgz | grep -q 'package/libubridge.so'
+          tar -tzf ubridge-*.tgz | grep -q 'package/libubridge.dylib'
+          tar -tzf ubridge-*.tgz | grep -q 'package/ubridge.dll'
 
-          echo "Native libraries:"
-          ls -lh libubridge.so libubridge.dylib ubridge.dll
-
-          echo "npm package:"
-          ls -lh ubridge-*.tgz
-
-      - name: Upload release packages
+      - name: Upload npm package
         uses: actions/upload-artifact@v4
         with:
-          name: ubridge-release
-          path: |
-            dist/*
-            ubridge-*.tgz
+          name: npm-package
+          path: ubridge-*.tgz
