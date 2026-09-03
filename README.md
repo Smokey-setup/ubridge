@@ -4,7 +4,7 @@ A zero-dependency, ultra-performance cross-language data serialization bridge so
 
 ---
 
-## 🛠️ How to Compile
+## How to Compile
 
 Before your language can talk to the engine, compile the C source files into raw machine instructions.
 
@@ -21,7 +21,7 @@ This instantly builds your shared system binary code (`libubridge.so` on Linux, 
 
 ---
 
-## 🧬 Engine Core Blueprint
+## Engine Core Blueprint
 
 Your library exposes clear, simple doors to manage raw data structures directly inside system memory:
 
@@ -36,7 +36,7 @@ Your library exposes clear, simple doors to manage raw data structures directly 
 
 ---
 
-## 💻 Language Blueprints
+## Language Blueprints
 
 Choose your language engine below. Follow the human-friendly explanation to link your code directly to the hardware core.
 
