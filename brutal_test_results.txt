@@ -1,4 +1,4 @@
-UBRIDGE BRUTAL STRUCTURAL TEST RESULTS
+UBRIDGE EXTENDED BRUTAL STRUCTURAL TEST RESULTS
 ============================================================
 
 [1] basic: PASS
@@ -16,62 +16,132 @@ stdout:
 PASS
 
 ------------------------------------------------------------
-[4] base64_lengths_0_to_63: PASS
+[4] extreme_float_values: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[5] string_edges: PASS
+[5] nan_and_infinity: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[6] utf8: PASS
+[6] base64_lengths_0_to_63: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[7] boolean: PASS
+[7] string_edges: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[8] null: PASS
+[8] utf8: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[9] array: PASS
+[9] boolean: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[10] object: PASS
+[10] null: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[11] nested: PASS
+[11] empty_array: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[12] determinism: PASS
+[12] empty_object: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[13] cycle_detection: PASS
+[13] array: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[14] large_100000_byte_string: PASS
+[14] large_array_5000: PASS
 stdout:
 PASS
 
 ------------------------------------------------------------
-[15] fuzz_500: PASS
+[15] object: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[16] large_object_1000: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[17] long_object_key_10000: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[18] nested: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[19] deep_nesting_100: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[20] determinism: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[21] duplicate_object_keys: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[22] cycle_detection: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[23] large_100000_byte_string: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[24] large_1mb_string: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[25] repeated_serialization_1000: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[26] repeated_create_free_10000: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[27] fuzz_500: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[28] extended_fuzz_5000: PASS
+stdout:
+PASS
+
+------------------------------------------------------------
+[29] mixed_array: PASS
 stdout:
 PASS
 
@@ -79,9 +149,9 @@ PASS
 
 SUMMARY
 ============================================================
-TOTAL:   15
-PASSED:  15
+TOTAL:   29
+PASSED:  29
 FAILED:  0
 CRASHED: 0
 
-ALL TESTS PASSED.
+ALL EXTENDED TESTS PASSED.

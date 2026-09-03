@@ -1,8 +1,8 @@
 import ctypes
+import math
 import os
 import subprocess
 import sys
-import tempfile
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 RESULT_FILE = os.path.join(ROOT, "brutal_test_results.txt")
@@ -48,6 +48,7 @@ def load_library():
 
 def process(lib, node):
     ptr = lib.ub_process(node)
+
     if not ptr:
         raise RuntimeError("ub_process returned NULL")
 
@@ -58,13 +59,17 @@ def process(lib, node):
 
 def test_basic():
     lib = load_library()
+
     node = lib.ub_create(1)
     lib.ub_int(node, 123456789)
+
     result = process(lib, node)
+
     lib.ub_free(node)
 
     assert result.startswith("I:")
     assert "#SIG:" in result
+
     return result
 
 def test_integer_boundaries():
@@ -89,11 +94,13 @@ def test_integer_boundaries():
     for value in values:
         node = lib.ub_create(1)
         lib.ub_int(node, value)
+
         result = process(lib, node)
+
         lib.ub_free(node)
 
         assert "#SIG:" in result
-        outputs.append((value, result))
+        outputs.append(result)
 
     return outputs
 
@@ -117,11 +124,71 @@ def test_float_values():
     for value in values:
         node = lib.ub_create(2)
         lib.ub_float(node, value)
+
         result = process(lib, node)
+
         lib.ub_free(node)
 
         assert "#SIG:" in result
-        outputs.append((value, result))
+        outputs.append(result)
+
+    return outputs
+
+def test_extreme_float_values():
+    lib = load_library()
+
+    values = [
+        1e-12,
+        -1e-12,
+        1e-9,
+        -1e-9,
+        999999.999999,
+        -999999.999999,
+        1e10,
+        -1e10,
+        1e15,
+        -1e15,
+        1e18,
+        -1e18
+    ]
+
+    outputs = []
+
+    for value in values:
+        node = lib.ub_create(2)
+        lib.ub_float(node, value)
+
+        result = process(lib, node)
+
+        lib.ub_free(node)
+
+        assert "#SIG:" in result
+        outputs.append(result)
+
+    return outputs
+
+def test_nan_and_infinity():
+    lib = load_library()
+
+    values = [
+        float("nan"),
+        float("inf"),
+        float("-inf")
+    ]
+
+    outputs = []
+
+    for value in values:
+        node = lib.ub_create(2)
+
+        lib.ub_float(node, value)
+
+        result = process(lib, node)
+
+        lib.ub_free(node)
+
+        assert "#SIG:" in result
+        outputs.append(result)
 
     return outputs
 
@@ -134,19 +201,16 @@ def test_base64_lengths():
         data = bytes((i % 256 for i in range(length)))
 
         node = lib.ub_create(3)
-
-        if data:
-            lib.ub_str(node, data)
-        else:
-            lib.ub_str(node, b"")
+        lib.ub_str(node, data)
 
         result = process(lib, node)
+
         lib.ub_free(node)
 
         assert result.startswith("P:")
         assert "#SIG:" in result
 
-        outputs.append((length, result))
+        outputs.append(result)
 
     return outputs
 
@@ -170,11 +234,13 @@ def test_string_edges():
     for value in values:
         node = lib.ub_create(3)
         lib.ub_str(node, value)
+
         result = process(lib, node)
+
         lib.ub_free(node)
 
         assert "#SIG:" in result
-        outputs.append((value, result))
+        outputs.append(result)
 
     return outputs
 
@@ -195,7 +261,9 @@ def test_utf8():
     for value in values:
         node = lib.ub_create(3)
         lib.ub_str(node, value)
+
         result = process(lib, node)
+
         lib.ub_free(node)
 
         assert "#SIG:" in result
@@ -211,7 +279,9 @@ def test_boolean():
     for value in [0, 1, 2, -1, 999999]:
         node = lib.ub_create(4)
         lib.ub_int(node, value)
+
         result = process(lib, node)
+
         lib.ub_free(node)
 
         assert result.startswith("B:")
@@ -223,10 +293,41 @@ def test_null():
     lib = load_library()
 
     node = lib.ub_create(0)
+
     result = process(lib, node)
+
     lib.ub_free(node)
 
     assert result.startswith("NIL;")
+
+    return result
+
+def test_empty_array():
+    lib = load_library()
+
+    arr = lib.ub_create(5)
+
+    result = process(lib, arr)
+
+    lib.ub_free(arr)
+
+    assert result.startswith("A:0[")
+    assert "#SIG:" in result
+
+    return result
+
+def test_empty_object():
+    lib = load_library()
+
+    obj = lib.ub_create(6)
+
+    result = process(lib, obj)
+
+    lib.ub_free(obj)
+
+    assert result.startswith("O:0{")
+    assert "#SIG:" in result
+
     return result
 
 def test_array():
@@ -240,10 +341,31 @@ def test_array():
         lib.ub_array(arr, item)
 
     result = process(lib, arr)
+
     lib.ub_free(arr)
 
     assert result.startswith("A:5[")
+
     return result
+
+def test_large_array():
+    lib = load_library()
+
+    arr = lib.ub_create(5)
+
+    for value in range(5000):
+        item = lib.ub_create(1)
+        lib.ub_int(item, value)
+        lib.ub_array(arr, item)
+
+    result = process(lib, arr)
+
+    lib.ub_free(arr)
+
+    assert result.startswith("A:5000[")
+    assert "#SIG:" in result
+
+    return f"serialized_length={len(result)}"
 
 def test_object():
     lib = load_library()
@@ -262,11 +384,56 @@ def test_object():
         lib.ub_object(obj, key, item)
 
     result = process(lib, obj)
+
     lib.ub_free(obj)
 
     assert result.startswith("O:3{")
     assert "#SIG:" in result
+
     return result
+
+def test_large_object():
+    lib = load_library()
+
+    obj = lib.ub_create(6)
+
+    for value in range(1000):
+        key = f"key_{value:05d}".encode()
+
+        item = lib.ub_create(1)
+        lib.ub_int(item, value)
+
+        lib.ub_object(obj, key, item)
+
+    result = process(lib, obj)
+
+    lib.ub_free(obj)
+
+    assert result.startswith("O:1000{")
+    assert "#SIG:" in result
+
+    return f"serialized_length={len(result)}"
+
+def test_long_object_key():
+    lib = load_library()
+
+    obj = lib.ub_create(6)
+
+    key = b"K" * 10000
+
+    item = lib.ub_create(1)
+    lib.ub_int(item, 42)
+
+    lib.ub_object(obj, key, item)
+
+    result = process(lib, obj)
+
+    lib.ub_free(obj)
+
+    assert "#SIG:" in result
+    assert "K:10000:" in result
+
+    return f"serialized_length={len(result)}"
 
 def test_nested():
     lib = load_library()
@@ -286,10 +453,36 @@ def test_nested():
     lib.ub_object(obj, b"data", arr)
 
     result = process(lib, obj)
+
     lib.ub_free(obj)
 
     assert "#SIG:" in result
+
     return result
+
+def test_deep_nesting():
+    lib = load_library()
+
+    root = lib.ub_create(5)
+    current = root
+
+    for _ in range(100):
+        child = lib.ub_create(5)
+        lib.ub_array(current, child)
+        current = child
+
+    value = lib.ub_create(1)
+    lib.ub_int(value, 123)
+
+    lib.ub_array(current, value)
+
+    result = process(lib, root)
+
+    lib.ub_free(root)
+
+    assert "#SIG:" in result
+
+    return f"serialized_length={len(result)}"
 
 def test_determinism():
     lib = load_library()
@@ -311,18 +504,45 @@ def test_determinism():
     lib.ub_free(obj)
 
     assert first == second
+
     return first
+
+def test_duplicate_object_keys():
+    lib = load_library()
+
+    obj = lib.ub_create(6)
+
+    first = lib.ub_create(1)
+    second = lib.ub_create(1)
+
+    lib.ub_int(first, 100)
+    lib.ub_int(second, 200)
+
+    lib.ub_object(obj, b"duplicate", first)
+    lib.ub_object(obj, b"duplicate", second)
+
+    result = process(lib, obj)
+
+    lib.ub_free(obj)
+
+    assert result.startswith("O:2{")
+    assert "#SIG:" in result
+
+    return result
 
 def test_cycle():
     lib = load_library()
 
     arr = lib.ub_create(5)
+
     lib.ub_array(arr, arr)
 
     result = process(lib, arr)
+
     lib.ub_free(arr)
 
     assert "LOOP:" in result
+
     return result
 
 def test_large_string():
@@ -339,40 +559,168 @@ def test_large_string():
 
     assert result.startswith("P:")
     assert "#SIG:" in result
+
     return f"serialized_length={len(result)}"
+
+def test_1mb_string():
+    lib = load_library()
+
+    data = b"B" * (1024 * 1024)
+
+    node = lib.ub_create(3)
+    lib.ub_str(node, data)
+
+    result = process(lib, node)
+
+    lib.ub_free(node)
+
+    assert result.startswith("P:")
+    assert "#SIG:" in result
+
+    return f"serialized_length={len(result)}"
+
+def test_repeated_serialization():
+    lib = load_library()
+
+    node = lib.ub_create(3)
+    lib.ub_str(node, b"repeated serialization test")
+
+    previous = None
+
+    for _ in range(1000):
+        result = process(lib, node)
+
+        if previous is not None:
+            assert result == previous
+
+        previous = result
+
+    lib.ub_free(node)
+
+    return "1000 repeated serializations completed"
+
+def test_repeated_create_free():
+    lib = load_library()
+
+    for i in range(10000):
+        node = lib.ub_create(1)
+        lib.ub_int(node, i)
+        result = process(lib, node)
+        lib.ub_free(node)
+
+        assert "#SIG:" in result
+
+    return "10000 create/process/free cycles completed"
 
 def test_fuzz():
     lib = load_library()
 
     for length in range(500):
-        data = bytes(((i * 37 + length) % 256 for i in range(length % 128)))
+        data = bytes(
+            ((i * 37 + length) % 256 for i in range(length % 128))
+        )
 
         node = lib.ub_create(3)
         lib.ub_str(node, data)
 
         result = process(lib, node)
+
         lib.ub_free(node)
 
         assert "#SIG:" in result
 
     return "500 deterministic fuzz iterations completed"
 
+def test_extended_fuzz():
+    lib = load_library()
+
+    for iteration in range(5000):
+        length = (iteration * 7919) % 2048
+
+        data = bytes(
+            ((iteration * 31 + i * 17) % 256 for i in range(length))
+        )
+
+        node = lib.ub_create(3)
+        lib.ub_str(node, data)
+
+        result = process(lib, node)
+
+        lib.ub_free(node)
+
+        assert "#SIG:" in result
+
+    return "5000 extended fuzz iterations completed"
+
+def test_mixed_array():
+    lib = load_library()
+
+    arr = lib.ub_create(5)
+
+    null_node = lib.ub_create(0)
+
+    int_node = lib.ub_create(1)
+    lib.ub_int(int_node, -999)
+
+    float_node = lib.ub_create(2)
+    lib.ub_float(float_node, -12.5)
+
+    string_node = lib.ub_create(3)
+    lib.ub_str(string_node, b"mixed")
+
+    bool_node = lib.ub_create(4)
+    lib.ub_int(bool_node, 1)
+
+    nested_obj = lib.ub_create(6)
+    nested_value = lib.ub_create(1)
+    lib.ub_int(nested_value, 42)
+    lib.ub_object(nested_obj, b"value", nested_value)
+
+    lib.ub_array(arr, null_node)
+    lib.ub_array(arr, int_node)
+    lib.ub_array(arr, float_node)
+    lib.ub_array(arr, string_node)
+    lib.ub_array(arr, bool_node)
+    lib.ub_array(arr, nested_obj)
+
+    result = process(lib, arr)
+
+    lib.ub_free(arr)
+
+    assert "#SIG:" in result
+
+    return result
+
 TESTS = [
     ("basic", test_basic),
     ("integer_boundaries", test_integer_boundaries),
     ("float_values", test_float_values),
+    ("extreme_float_values", test_extreme_float_values),
+    ("nan_and_infinity", test_nan_and_infinity),
     ("base64_lengths_0_to_63", test_base64_lengths),
     ("string_edges", test_string_edges),
     ("utf8", test_utf8),
     ("boolean", test_boolean),
     ("null", test_null),
+    ("empty_array", test_empty_array),
+    ("empty_object", test_empty_object),
     ("array", test_array),
+    ("large_array_5000", test_large_array),
     ("object", test_object),
+    ("large_object_1000", test_large_object),
+    ("long_object_key_10000", test_long_object_key),
     ("nested", test_nested),
+    ("deep_nesting_100", test_deep_nesting),
     ("determinism", test_determinism),
+    ("duplicate_object_keys", test_duplicate_object_keys),
     ("cycle_detection", test_cycle),
     ("large_100000_byte_string", test_large_string),
+    ("large_1mb_string", test_1mb_string),
+    ("repeated_serialization_1000", test_repeated_serialization),
+    ("repeated_create_free_10000", test_repeated_create_free),
     ("fuzz_500", test_fuzz),
+    ("extended_fuzz_5000", test_extended_fuzz),
+    ("mixed_array", test_mixed_array),
 ]
 
 def child_mode(case_name):
@@ -387,7 +735,7 @@ def child_mode(case_name):
 
 def run_parent():
     with open(RESULT_FILE, "w", encoding="utf-8") as results:
-        results.write("UBRIDGE BRUTAL STRUCTURAL TEST RESULTS\n")
+        results.write("UBRIDGE EXTENDED BRUTAL STRUCTURAL TEST RESULTS\n")
         results.write("=" * 60 + "\n\n")
 
         passed = 0
@@ -395,7 +743,7 @@ def run_parent():
         crashed = 0
 
         for index, (name, _) in enumerate(TESTS, 1):
-            print(f"[{index}/{len(TESTS)}] {name}")
+            print(f"[{index}/{len(TESTS)}] {name}", flush=True)
 
             completed = subprocess.run(
                 [sys.executable, os.path.abspath(__file__), "--case", name],
@@ -446,7 +794,7 @@ def run_parent():
         elif failed:
             results.write("\nFAILURE: One or more structural tests failed.\n")
         else:
-            results.write("\nALL TESTS PASSED.\n")
+            results.write("\nALL EXTENDED TESTS PASSED.\n")
 
     print()
     print(f"Results written to: {RESULT_FILE}")
