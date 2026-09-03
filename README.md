@@ -1,5 +1,4 @@
 ```bash
-cat << 'EOF' > README.md
 # ubridge
 
 > A low-level, cross-language data serialization and precision bridge designed to eliminate floating-point drift and standardize data exchange between Node.js, Python, Rust, Go, Java, C#, and native environments via a unified C-ABI.
