@@ -163,8 +163,8 @@ jobs:
           tar -tzf setup-ubridge-*.tgz | grep -q 'package/libubridge.dylib'
           tar -tzf setup-ubridge-*.tgz | grep -q 'package/ubridge.dll'
 
-      - name: Stage npm package
-        run: npm stage publish
+      - name: Publish npm package
+        run: npm publish --access public
 
       - name: Upload npm package
         uses: actions/upload-artifact@v4
