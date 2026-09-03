@@ -83,14 +83,14 @@ static char* u_pack(const char* input, size_t len) {
     size_t i = 0, j = 0;
     while (i < len) {
         size_t remaining = len - i;
-        uint32_t octet_a = i < len ? (unsigned char)input[i++] : 0;
-        uint32_t octet_b = i < len ? (unsigned char)input[i++] : 0;
-        uint32_t octet_c = i < len ? (unsigned char)input[i++] : 0;
+        uint32_t octet_a = (unsigned char)input[i++];
+        uint32_t octet_b = remaining > 1 ? (unsigned char)input[i++] : 0;
+        uint32_t octet_c = remaining > 2 ? (unsigned char)input[i++] : 0;
         uint32_t triple = (octet_a << 16) + (octet_b << 8) + octet_c;
         res[j++] = B64[(triple >> 18) & 0x3F];
         res[j++] = B64[(triple >> 12) & 0x3F];
-        res[j++] = (remaining < 2) ? '=' : B64[(triple >> 6) & 0x3F];
-        res[j++] = (remaining < 3) ? '=' : B64[triple & 0x3F];
+        res[j++] = remaining > 1 ? B64[(triple >> 6) & 0x3F] : '=';
+        res[j++] = remaining > 2 ? B64[triple & 0x3F] : '=';
     }
     res[out_len] = '\0';
     return res;
