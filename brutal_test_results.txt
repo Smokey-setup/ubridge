@@ -66,7 +66,10 @@ stdout:
 PASS
 
 ------------------------------------------------------------
-[14] large_100000_byte_string: CRASH (signal 11)
+[14] large_100000_byte_string: PASS
+stdout:
+PASS
+
 ------------------------------------------------------------
 [15] fuzz_500: PASS
 stdout:
@@ -77,8 +80,8 @@ PASS
 SUMMARY
 ============================================================
 TOTAL:   15
-PASSED:  14
+PASSED:  15
 FAILED:  0
-CRASHED: 1
+CRASHED: 0
 
-CRITICAL: Native C library crash detected.
+ALL TESTS PASSED.

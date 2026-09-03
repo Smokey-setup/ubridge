@@ -139,7 +139,6 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
         case U_FLOAT: {
             long long int_part = (long long)(llabs(node->float_scale_val) / U_SCALE_FACTOR);
             long long frac_part = (long long)(llabs(node->float_scale_val) % U_SCALE_FACTOR);
-            // Fix 1: Precise negative-sign normalization logic for values bounded within (-1.0, 0.0)
             if (node->float_scale_val < 0) {
                 written = snprintf(tmp, sizeof(tmp), "F:8:-%lld.%08lld;", int_part, frac_part);
             } else {
@@ -150,8 +149,35 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
         case U_STRING: {
             char* packed_str = u_pack(node->str_val, strlen(node->str_val));
             if (packed_str) {
-                written = snprintf(tmp, sizeof(tmp), "P:%zu:%s;", strlen(packed_str), packed_str);
+                size_t packed_len = strlen(packed_str);
+                size_t header_len = (size_t)snprintf(tmp, sizeof(tmp), "P:%zu:", packed_len);
+                size_t required = header_len + packed_len + 1;
+
+                if (*len + required >= *cap) {
+                    size_t new_cap = *cap;
+                    while (*len + required >= new_cap) {
+                        new_cap *= 2;
+                    }
+                    char* checked_buf = (char*)realloc(*buf, new_cap);
+                    if (!checked_buf) {
+                        free(packed_str);
+                        return;
+                    }
+                    *buf = checked_buf;
+                    *cap = new_cap;
+                }
+
+                memcpy(*buf + *len, tmp, header_len);
+                *len += header_len;
+
+                memcpy(*buf + *len, packed_str, packed_len);
+                *len += packed_len;
+
+                (*buf)[(*len)++] = ';';
+                (*buf)[*len] = '\0';
+
                 free(packed_str);
+                return;
             }
             break;
         }
