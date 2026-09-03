@@ -11,9 +11,9 @@ def run_suite():
 
     prefix = "lib"
     ext = ".so"
-    if sys.platform == "darwin": 
+    if sys.platform == "darwin":
         ext = ".dylib"
-    elif sys.platform == "win32": 
+    elif sys.platform == "win32":
         prefix = ""
         ext = ".dll"
     
@@ -21,9 +21,8 @@ def run_suite():
     lib = ctypes.CDLL(lib_path)
     
     lib.ub_create.restype = ctypes.c_void_p
-    lib.ub_process.restype = ctypes.c_void_p 
+    lib.ub_process.restype = ctypes.c_void_p
     
-    # Assert Negative-Sign Fixed Point Isolation Logic (-0.25 Verification)
     neg_node = lib.ub_create(2)
     lib.ub_float(ctypes.c_void_p(neg_node), ctypes.c_double(-0.25))
     
@@ -41,6 +40,60 @@ def run_suite():
         
     lib.ub_string_free(ctypes.c_void_p(res_ptr))
     lib.ub_free(ctypes.c_void_p(neg_node))
+
+    neg_node = lib.ub_create(2)
+    lib.ub_float(ctypes.c_void_p(neg_node), ctypes.c_double(-12.5))
+    
+    res_ptr = lib.ub_process(ctypes.c_void_p(neg_node))
+    output_token = ctypes.c_char_p(res_ptr).value.decode()
+    
+    print(f"\n -> Input Negative Value: -12.5")
+    print(f" -> Output Token Representation: {output_token}")
+    
+    if "F:8:-12.50000000" in output_token:
+        print("Correct negative fixed-point formatting confirmed.")
+    else:
+        print(" Negative whole-number formatting assertion error.")
+        sys.exit(1)
+        
+    lib.ub_string_free(ctypes.c_void_p(res_ptr))
+    lib.ub_free(ctypes.c_void_p(neg_node))
+
+    string_node = lib.ub_create(3)
+    lib.ub_str(ctypes.c_void_p(string_node), ctypes.c_char_p(b"A"))
+    
+    res_ptr = lib.ub_process(ctypes.c_void_p(string_node))
+    output_token = ctypes.c_char_p(res_ptr).value.decode()
+    
+    print(f"\n -> Input Base64 Test String: A")
+    print(f" -> Output Token Representation: {output_token}")
+    
+    if "P:4:QQ==;" in output_token:
+        print("Correct Base64 single-byte padding confirmed.")
+    else:
+        print(" Base64 single-byte padding assertion error.")
+        sys.exit(1)
+        
+    lib.ub_string_free(ctypes.c_void_p(res_ptr))
+    lib.ub_free(ctypes.c_void_p(string_node))
+
+    string_node = lib.ub_create(3)
+    lib.ub_str(ctypes.c_void_p(string_node), ctypes.c_char_p(b"AB"))
+    
+    res_ptr = lib.ub_process(ctypes.c_void_p(string_node))
+    output_token = ctypes.c_char_p(res_ptr).value.decode()
+    
+    print(f"\n -> Input Base64 Test String: AB")
+    print(f" -> Output Token Representation: {output_token}")
+    
+    if "P:4:QUI=;" in output_token:
+        print("Correct Base64 two-byte padding confirmed.")
+    else:
+        print(" Base64 two-byte padding assertion error.")
+        sys.exit(1)
+        
+    lib.ub_string_free(ctypes.c_void_p(res_ptr))
+    lib.ub_free(ctypes.c_void_p(string_node))
     
     print("\n PRODUCTION STATUS CONFIRMED: 10/10 READY FOR PRODUCTION ")
 

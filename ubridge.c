@@ -44,7 +44,10 @@ EXPORT void ub_float(UNode* node, double val) {
 
 EXPORT void ub_str(UNode* node, const char* val) {
     if (!node || !val) return;
-    node->str_val = strdup(val);
+    char* new_str = strdup(val);
+    if (!new_str) return;
+    free(node->str_val);
+    node->str_val = new_str;
 }
 
 EXPORT void ub_array(UNode* arr_node, UNode* item_node) {
@@ -79,14 +82,15 @@ static char* u_pack(const char* input, size_t len) {
     if (!res) return NULL;
     size_t i = 0, j = 0;
     while (i < len) {
+        size_t remaining = len - i;
         uint32_t octet_a = i < len ? (unsigned char)input[i++] : 0;
         uint32_t octet_b = i < len ? (unsigned char)input[i++] : 0;
         uint32_t octet_c = i < len ? (unsigned char)input[i++] : 0;
         uint32_t triple = (octet_a << 16) + (octet_b << 8) + octet_c;
         res[j++] = B64[(triple >> 18) & 0x3F];
         res[j++] = B64[(triple >> 12) & 0x3F];
-        res[j++] = (i - 1 > len) ? '=' : B64[(triple >> 6) & 0x3F];
-        res[j++] = (i > len) ? '=' : B64[triple & 0x3F];
+        res[j++] = (remaining < 2) ? '=' : B64[(triple >> 6) & 0x3F];
+        res[j++] = (remaining < 3) ? '=' : B64[triple & 0x3F];
     }
     res[out_len] = '\0';
     return res;
@@ -136,8 +140,8 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
             long long int_part = (long long)(llabs(node->float_scale_val) / U_SCALE_FACTOR);
             long long frac_part = (long long)(llabs(node->float_scale_val) % U_SCALE_FACTOR);
             // Fix 1: Precise negative-sign normalization logic for values bounded within (-1.0, 0.0)
-            if (node->float_scale_val < 0 && int_part == 0) {
-                written = snprintf(tmp, sizeof(tmp), "F:8:-0.%08lld;", frac_part);
+            if (node->float_scale_val < 0) {
+                written = snprintf(tmp, sizeof(tmp), "F:8:-%lld.%08lld;", int_part, frac_part);
             } else {
                 written = snprintf(tmp, sizeof(tmp), "F:8:%lld.%08lld;", int_part, frac_part);
             }
