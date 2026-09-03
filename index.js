@@ -12,7 +12,7 @@ if (!fs.existsSync(libPath)) {
   throw new Error(`[@set-up/ubridge] FATAL: Native library not found at ${libPath}. Ensure it is compiled for ${os.platform()}-${os.arch()}.`);
 }
 
-// 2. Bound FFI Native Library
+// 2. Bound FFI Native Library (Upgraded with Scientific & Shared Memory Ring Bindings)
 const native = ffi.Library(libPath, {
   'ub_create': ['pointer', ['uint8']],
   'ub_int': ['void', ['pointer', 'int64']],
@@ -23,7 +23,12 @@ const native = ffi.Library(libPath, {
   // CRITICAL FIX: Return pointer, not string, to prevent malloc leaks
   'ub_process': ['pointer', ['pointer']], 
   'ub_free': ['void', ['pointer']],
-  'ub_string_free': ['void', ['pointer']]
+  'ub_string_free': ['void', ['pointer']],
+  /* --- NEW PRODUCTION UPGRADE BINDINGS --- */
+  'ub_scientific': ['void', ['pointer', 'int64', 'int32']],
+  'ub_ring_init': ['pointer', ['pointer', 'size_t']],
+  'ub_ring_push': ['int', ['pointer', 'pointer']],
+  'ub_ring_pop': ['int', ['pointer', 'pointer']]
 });
 
 const TYPES = { NULL: 0, INT: 1, FLOAT: 2, STRING: 3, BOOL: 4, ARRAY: 5, OBJECT: 6 };
@@ -48,6 +53,13 @@ class UBridge {
   setFloat(val) { this._checkAlive(); native.ub_float(this.ptr, Number(val)); return this; }
   setStr(val) { this._checkAlive(); native.ub_str(this.ptr, String(val)); return this; }
   setBool(val) { this._checkAlive(); native.ub_int(this.ptr, val ? 1 : 0); return this; }
+  
+  /* --- NEW PRODUCTION UPGRADE METHOD --- */
+  setScientific(coeff, exp) {
+    this._checkAlive();
+    native.ub_scientific(this.ptr, Number(coeff), Number(exp));
+    return this;
+  }
   
   push(itemNode) { 
     this._checkAlive(); 
@@ -130,8 +142,37 @@ class UBridge {
   }
 }
 
+/* 
+ * --- NEW PRODUCTION UPGRADE: ZERO-COPY SHARED MEMORY RING WRAPPER ---
+ * Allows Node.js to read/write directly to atomic shared memory buffers with Python or C.
+ */
+class UBridgeRing {
+  constructor(bufferPointer, capacityNodes) {
+    this.ringPtr = native.ub_ring_init(bufferPointer, capacityNodes);
+    if (!this.ringPtr || this.ringPtr.isNull()) {
+      throw new Error("[@set-up/ubridge] Failed to initialize atomic SPSC shared memory ring.");
+    }
+  }
+
+  push(uNode) {
+    if (!uNode || !uNode.ptr) return false;
+    return native.ub_ring_push(this.ringPtr, uNode.ptr) === 1;
+  }
+
+  pop() {
+    const nodeInstance = new UBridge(TYPES.NULL);
+    const success = native.ub_ring_pop(this.ringPtr, nodeInstance.ptr);
+    if (!success) {
+      nodeInstance.free();
+      return null;
+    }
+    return nodeInstance;
+  }
+}
+
 module.exports = {
   UBridge,
+  UBridgeRing,
   TYPES,
   // Optional: Export raw native bindings for hardcore users who want to manage pointers manually
   raw: native 

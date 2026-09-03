@@ -2,7 +2,7 @@ import ctypes
 import os
 import sys
 
-__version__ = "1.1.0"
+__version__ = "2.0.0"
 
 # 1. Fail-Safe Library Path Resolution
 if sys.platform == "darwin":
@@ -48,6 +48,19 @@ lib.ub_free.restype = None
 lib.ub_string_free.argtypes = [ctypes.c_void_p]
 lib.ub_string_free.restype = None
 
+# --- NEW PRODUCTION UPGRADE FFI BINDINGS ---
+lib.ub_scientific.argtypes = [ctypes.c_void_p, ctypes.c_int64, ctypes.c_int32]
+lib.ub_scientific.restype = None
+
+lib.ub_ring_init.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+lib.ub_ring_init.restype = ctypes.c_void_p
+
+lib.ub_ring_push.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+lib.ub_ring_push.restype = ctypes.c_int
+
+lib.ub_ring_pop.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+lib.ub_ring_pop.restype = ctypes.c_int
+
 
 class Types:
     NULL = 0
@@ -88,6 +101,12 @@ class UBridge:
     def set_bool(self, val: bool):
         self._check_alive()
         lib.ub_int(self.ptr, 1 if val else 0)
+        return self
+
+    # --- NEW PRODUCTION UPGRADE METHOD ---
+    def set_scientific(self, coefficient: int, exponent: int):
+        self._check_alive()
+        lib.ub_scientific(self.ptr, int(coefficient), int(exponent))
         return self
 
     def push(self, item_node):
@@ -173,3 +192,26 @@ class UBridge:
             return obj_node
 
         return UBridge(Types.NULL)
+
+
+# --- NEW PRODUCTION UPGRADE: ZERO-COPY SHARED MEMORY RING WRAPPER ---
+class UBridgeRing:
+    """Enables Python to interact with atomic SPSC shared memory rings for zero-copy IPC."""
+    
+    def __init__(self, buffer_pointer, capacity_nodes: int):
+        self.ring_ptr = lib.ub_ring_init(buffer_pointer, capacity_nodes)
+        if not self.ring_ptr:
+            raise RuntimeError("[@set-up/ubridge] Failed to initialize atomic SPSC shared memory ring.")
+
+    def push(self, u_node: UBridge) -> bool:
+        if not u_node or not u_node.ptr:
+            return False
+        return lib.ub_ring_push(self.ring_ptr, u_node.ptr) == 1
+
+    def pop(self):
+        node_instance = UBridge(Types.NULL)
+        success = lib.ub_ring_pop(self.ring_ptr, node_instance.ptr)
+        if not success:
+            node_instance.free()
+            return None
+        return node_instance

@@ -1,7 +1,7 @@
 {
   "name": "@set-up/ubridge",
-  "version": "1.1.1",
-  "description": "High-performance cross-language data serialization bridge solving IEEE 754 drift natively via C-ABI memory routing.",
+  "version": "2.0.0",
+  "description": "Universal Mathematical Operating Layer solving IEEE 754 float drift, zero-copy atomic SPSC shared memory IPC, and hybrid precision across polyglot microservices.",
   "main": "index.js",
   "files": [
     "index.js",
@@ -13,7 +13,8 @@
     "*.dll"
   ],
   "scripts": {
-    "build": "make"
+    "build": "make",
+    "test": "node test.js"
   },
   "repository": {
     "type": "git",
@@ -25,7 +26,12 @@
     "ieee754",
     "cross-platform",
     "performance",
-    "native"
+    "native",
+    "shared-memory",
+    "spsc",
+    "hybrid-precision",
+    "fintech",
+    "microservices"
   ],
   "author": "Smokey-setup",
   "license": "MIT",

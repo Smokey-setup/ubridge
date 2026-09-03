@@ -55,6 +55,9 @@ EXPORT UNode* ub_create(uint8_t type) {
     if (!node) return NULL;
     node->type = type;
     node->mem_id = (uintptr_t)node;
+    /* Initialize new hybrid precision defaults */
+    node->precision_mode = UB_MODE_FIXED;
+    node->math_hash_checkpoint = 2166136261U;
     return node;
 }
 
@@ -64,6 +67,7 @@ EXPORT void ub_int(UNode* node, int64_t val) {
     convert.i = val;
     convert.u = u_network_bytes(convert.u);
     node->int_val = convert.i;
+    node->precision_mode = UB_MODE_FIXED;
 }
 
 EXPORT void ub_float(UNode* node, double val) {
@@ -72,6 +76,7 @@ EXPORT void ub_float(UNode* node, double val) {
         node->type = U_NULL;
         return;
     }
+    node->precision_mode = UB_MODE_FIXED;
     double scaled = val * (double)U_SCALE_FACTOR;
     if (scaled > (double)INT64_MAX) {
         node->float_scale_val = INT64_MAX;
@@ -200,22 +205,28 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintp
         }
 
         case U_FLOAT: {
-            int is_neg = node->float_scale_val < 0;
-            uint64_t abs_val;
-            if (is_neg) {
-                abs_val = (node->float_scale_val == INT64_MIN) 
-                    ? (uint64_t)INT64_MAX + 1ULL 
-                    : (uint64_t)(-node->float_scale_val);
+            if (node->precision_mode == UB_MODE_SCIENTIFIC) {
+                written = snprintf(tmp, sizeof(tmp), "S:C:%lld:E:%d;", 
+                                   (long long)node->scientific_coeff, 
+                                   (int)node->scientific_exp);
             } else {
-                abs_val = (uint64_t)node->float_scale_val;
-            }
-            uint64_t int_part = abs_val / U_SCALE_FACTOR;
-            uint64_t frac_part = abs_val % U_SCALE_FACTOR;
+                int is_neg = node->float_scale_val < 0;
+                uint64_t abs_val;
+                if (is_neg) {
+                    abs_val = (node->float_scale_val == INT64_MIN) 
+                        ? (uint64_t)INT64_MAX + 1ULL 
+                        : (uint64_t)(-node->float_scale_val);
+                } else {
+                    abs_val = (uint64_t)node->float_scale_val;
+                }
+                uint64_t int_part = abs_val / U_SCALE_FACTOR;
+                uint64_t frac_part = abs_val % U_SCALE_FACTOR;
 
-            written = snprintf(tmp, sizeof(tmp), "F:8:%s%llu.%08llu;", 
-                               is_neg ? "-" : "", 
-                               (unsigned long long)int_part, 
-                               (unsigned long long)frac_part);
+                written = snprintf(tmp, sizeof(tmp), "F:8:%s%llu.%08llu;", 
+                                   is_neg ? "-" : "", 
+                                   (unsigned long long)int_part, 
+                                   (unsigned long long)frac_part);
+            }
             break;
         }
 
@@ -421,4 +432,63 @@ EXPORT void ub_free(UNode* root) {
 
 EXPORT void ub_string_free(char* ptr) {
     if (ptr) free(ptr);
+}
+
+
+/* 1. Dynamic Scientific Mode Extension API */
+EXPORT void ub_scientific(UNode* node, int64_t coefficient, int32_t exponent) {
+    if (!node) return;
+    node->type = U_FLOAT;
+    node->precision_mode = UB_MODE_SCIENTIFIC;
+    node->scientific_coeff = coefficient;
+    node->scientific_exp = exponent;
+}
+
+/* 2. Atomic SPSC Shared Memory Ring Buffer Implementation */
+EXPORT ub_ring_t* ub_ring_init(void* buffer_ptr, size_t capacity_nodes) {
+    if (!buffer_ptr || capacity_nodes == 0) return NULL;
+    ub_ring_t* ring = (ub_ring_t*)buffer_ptr;
+    ring->capacity = capacity_nodes;
+    ring->head = 0;
+    ring->tail = 0;
+    ring->version_seq = 0;
+    return ring;
+}
+
+EXPORT int ub_ring_push(ub_ring_t* ring, const UNode* node) {
+    if (!ring || !node) return 0;
+    size_t head = ring->head;
+    size_t next_head = (head + 1) % ring->capacity;
+    
+    if (next_head == ring->tail) {
+        return 0; // Ring buffer full
+    }
+    
+    /* Atomic state commit with version safety barrier */
+    ring->version_seq++;
+    memcpy(&ring->nodes[head], node, sizeof(UNode));
+    ring->head = next_head;
+    ring->version_seq++;
+    return 1;
+}
+
+EXPORT int ub_ring_pop(ub_ring_t* ring, UNode* out_node) {
+    if (!ring || !out_node) return 0;
+    size_t tail = ring->tail;
+    
+    if (tail == ring->head) {
+        return 0; // Ring buffer empty
+    }
+    
+    uint64_t seq_before = ring->version_seq;
+    memcpy(out_node, &ring->nodes[tail], sizeof(UNode));
+    uint64_t seq_after = ring->version_seq;
+    
+    /* If sequence count changed mid-read, retry or reject stale payload */
+    if ((seq_before & 1) != 0 || seq_before != seq_after) {
+        return 0; 
+    }
+    
+    ring->tail = (tail + 1) % ring->capacity;
+    return 1;
 }

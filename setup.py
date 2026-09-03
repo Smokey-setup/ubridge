@@ -26,12 +26,12 @@ def get_version():
                 return match.group(1)
     except FileNotFoundError:
         pass
-    return "1.1.0"  # Fallback version
+    return "2.0.0"  # Upgraded fallback version reflecting the Universal Mathematical Operating Layer
 
 setup(
     name="ubridge",
     version=get_version(),
-    description="Cross-language integer fixed-point serialization bridge natively resolving IEEE 754 drift.",
+    description="Universal Mathematical Operating Layer resolving IEEE 754 float drift, zero-copy atomic SPSC shared memory IPC, and hybrid precision across polyglot microservices.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Smokey-setup",
