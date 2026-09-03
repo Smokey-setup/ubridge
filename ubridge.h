@@ -22,6 +22,7 @@ typedef struct UNode {
     char** obj_keys;
     struct UNode** obj_vals;
     size_t obj_len;
+    uintptr_t mem_id; // Unique memory tracker to prevent circular reference lockups
 } UNode;
 
 #ifdef _WIN32

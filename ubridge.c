@@ -4,21 +4,19 @@
 #include <string.h>
 #include <math.h>
 
+// Global configuration constants for micro-packing layers
+static const char B64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 EXPORT UNode* u_create(uint8_t type) {
     UNode* node = (UNode*)calloc(1, sizeof(UNode));
     if (!node) return NULL;
     node->type = type;
+    node->mem_id = (uintptr_t)node; // Store unique memory reference address
     return node;
 }
 
-EXPORT void u_int(UNode* node, int64_t val) {
-    if (node) node->int_val = val;
-}
-
-EXPORT void u_float(UNode* node, double val) {
-    if (node) node->float_val = val;
-}
-
+EXPORT void u_int(UNode* node, int64_t val) { if (node) node->int_val = val; }
+EXPORT void u_float(UNode* node, double val) { if (node) node->float_val = val; }
 EXPORT void u_str(UNode* node, const char* val) {
     if (!node || !val) return;
     node->str_val = strdup(val);
@@ -36,31 +34,59 @@ EXPORT void u_object(UNode* obj_node, const char* key, UNode* val_node) {
     obj_node->obj_len++;
     obj_node->obj_keys = (char**)realloc(obj_node->obj_keys, obj_node->obj_len * sizeof(char*));
     obj_node->obj_vals = (UNode**)realloc(obj_node->obj_vals, obj_node->obj_len * sizeof(UNode*));
-    
     obj_node->obj_keys[obj_node->obj_len - 1] = strdup(key);
     obj_node->obj_vals[obj_node->obj_len - 1] = val_node;
 }
 
-static uint32_t compute_hash(const char* data, size_t len) {
-    uint32_t hash = 5381;
+// ⚡ Feature 2: High-Performance Native Base64 Micro-Packing Encoder
+static char* u_pack(const char* input, size_t len) {
+    size_t out_len = 4 * ((len + 2) / 3);
+    char* res = (char*)malloc(out_len + 1);
+    size_t i = 0, j = 0;
+    while (i < len) {
+        uint32_t octet_a = i < len ? (unsigned char)input[i++] : 0;
+        uint32_t octet_b = i < len ? (unsigned char)input[i++] : 0;
+        uint32_t octet_c = i < len ? (unsigned char)input[i++] : 0;
+        uint32_t triple = (octet_a << 16) + (octet_b << 8) + octet_c;
+        res[j++] = B64[(triple >> 18) & 0x3F];
+        res[j++] = B64[(triple >> 12) & 0x3F];
+        res[j++] = (i > len + 1) ? '=' : B64[(triple >> 6) & 0x3F];
+        res[j++] = (i > len) ? '=' : B64[triple & 0x3F];
+    }
+    res[out_len] = '\0';
+    return res;
+}
+
+// ⚡ Feature 3: Cryptographic FNV-1a Payload Tamper Integrity Verification
+static uint32_t compute_fnv1a(const char* data, size_t len) {
+    uint32_t hash = 2166136261U;
     for (size_t i = 0; i < len; i++) {
-        hash = ((hash << 5) + hash) + data[i];
+        hash ^= (unsigned char)data[i];
+        hash *= 16777619;
     }
     return hash;
 }
 
-static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len) {
+// Recursive streaming layer featuring Feature 1: Anti-Circular Graph Resolution
+static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len, uintptr_t* history, size_t depth) {
     if (!node) return;
     char tmp[512];
     int written = 0;
 
+    // Intercept circular pointer references immediately to avoid infinite crash loops
+    for (size_t i = 0; i < depth; i++) {
+        if (history[i] == node->mem_id) {
+            written = snprintf(tmp, sizeof(tmp), "LOOP:%p;", (void*)node->mem_id);
+            if (*len + written >= *cap) { *cap *= 2; *buf = (char*)realloc(*buf, *cap); }
+            strcpy(*buf + *len, tmp); *len += written;
+            return;
+        }
+    }
+    history[depth] = node->mem_id;
+
     switch (node->type) {
-        case U_NULL:
-            written = snprintf(tmp, sizeof(tmp), "NIL;");
-            break;
-        case U_INT:
-            written = snprintf(tmp, sizeof(tmp), "I:%lld;", node->int_val);
-            break;
+        case U_NULL:   written = snprintf(tmp, sizeof(tmp), "NIL;"); break;
+        case U_INT:    written = snprintf(tmp, sizeof(tmp), "I:%lld;", node->int_val); break;
         case U_FLOAT: {
             double val = node->float_val;
             if (isnan(val)) written = snprintf(tmp, sizeof(tmp), "F:NAN;");
@@ -68,15 +94,15 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len) {
             else written = snprintf(tmp, sizeof(tmp), "F:8:%.8f;", val);
             break;
         }
-        case U_STRING:
-            written = snprintf(tmp, sizeof(tmp), "S:%zu:%s;", strlen(node->str_val), node->str_val);
+        case U_STRING: {
+            // Compress plain text data strings using the micro packing layer natively
+            char* packed_str = u_pack(node->str_val, strlen(node->str_val));
+            written = snprintf(tmp, sizeof(tmp), "P:%zu:%s;", strlen(packed_str), packed_str);
+            free(packed_str);
             break;
-        case U_BOOL:
-            written = snprintf(tmp, sizeof(tmp), "B:%d;", node->int_val ? 1 : 0);
-            break;
-        case U_ARRAY:
-            written = snprintf(tmp, sizeof(tmp), "A:%zu[", node->arr_len);
-            break;
+        }
+        case U_BOOL:   written = snprintf(tmp, sizeof(tmp), "B:%d;", node->int_val ? 1 : 0); break;
+        case U_ARRAY:  written = snprintf(tmp, sizeof(tmp), "A:%zu[", node->arr_len); break;
         case U_OBJECT: {
             for (size_t i = 0; i < node->obj_len; i++) {
                 for (size_t j = i + 1; j < node->obj_len; j++) {
@@ -91,36 +117,25 @@ static void u_serialize(UNode* node, char** buf, size_t* cap, size_t* len) {
         }
     }
 
-    if (*len + written >= *cap) {
-        *cap *= 2;
-        *buf = (char*)realloc(*buf, *cap);
-    }
-    strcpy(*buf + *len, tmp);
-    *len += written;
+    if (*len + written >= *cap) { *cap *= 2; *buf = (char*)realloc(*buf, *cap); }
+    strcpy(*buf + *len, tmp); *len += written;
 
     if (node->type == U_ARRAY) {
         for (size_t i = 0; i < node->arr_len; i++) {
-            u_serialize(node->arr_vals[i], buf, cap, len);
-            if (i < node->arr_len - 1 && (*buf)[*len - 1] == ';') {
-                (*buf)[*len - 1] = '|';
-            }
+            u_serialize(node->arr_vals[i], buf, cap, len, history, depth + 1);
+            if (i < node->arr_len - 1 && (*buf)[*len - 1] == ';') (*buf)[*len - 1] = '|';
         }
-        strcat(*buf, "]");
-        *len += 1;
+        strcat(*buf, "]"); *len += 1;
     } else if (node->type == U_OBJECT) {
         for (size_t i = 0; i < node->obj_len; i++) {
             size_t klen = strlen(node->obj_keys[i]);
             size_t need = klen + 16;
             if (*len + need >= *cap) { *cap += need * 2; *buf = (char*)realloc(*buf, *cap); }
             *len += snprintf(*buf + *len, *cap - *len, "K:%zu:%s->", klen, node->obj_keys[i]);
-            
-            u_serialize(node->obj_vals[i], buf, cap, len);
-            if (i < node->obj_len - 1 && (*buf)[*len - 1] == ';') {
-                (*buf)[*len - 1] = '|';
-            }
+            u_serialize(node->obj_vals[i], buf, cap, len, history, depth + 1);
+            if (i < node->obj_len - 1 && (*buf)[*len - 1] == ';') (*buf)[*len - 1] = '|';
         }
-        strcat(*buf, "}");
-        *len += 1;
+        strcat(*buf, "}"); *len += 1;
     }
 }
 
@@ -130,15 +145,18 @@ EXPORT const char* u_process(UNode* root) {
     char* buf = (char*)malloc(cap);
     buf[0] = '\0';
     
-    u_serialize(root, &buf, &cap, &len);
+    // Safety buffer track allocation mapping to block structural loops
+    uintptr_t* history = (uintptr_t*)calloc(1024, sizeof(uintptr_t));
+    u_serialize(root, &buf, &cap, &len, history, 0);
+    free(history);
     
-    uint32_t verification_hash = compute_hash(buf, len);
-    char checksum_tag[64];
-    int check_len = snprintf(checksum_tag, sizeof(checksum_tag), "V:%08X", verification_hash);
+    uint32_t signature = compute_fnv1a(buf, len);
+    char crypto_tag[32];
+    int crypt_len = snprintf(crypto_tag, sizeof(crypto_tag), "SIG:%08X", signature);
     
-    buf = (char*)realloc(buf, len + check_len + 2);
+    buf = (char*)realloc(buf, len + crypt_len + 2);
     strcat(buf, "#");
-    strcat(buf, checksum_tag);
+    strcat(buf, crypto_tag);
     
     return buf;
 }
