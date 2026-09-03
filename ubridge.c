@@ -246,16 +246,21 @@ EXPORT const char* ub_process(UNode* root) {
 
 static void u_free_tracked(UNode* root, uintptr_t** freed_history, size_t* cap, size_t* count) {
     if (!root) return;
+
+    uintptr_t root_id = (uintptr_t)root;
+
     for (size_t i = 0; i < *count; i++) {
-        if ((*freed_history)[i] == root->mem_id) return;
+        if ((*freed_history)[i] == root_id) return;
     }
+
     if (*count >= *cap) {
         *cap *= 2;
         uintptr_t* checked_freed = (uintptr_t*)realloc(*freed_history, *cap * sizeof(uintptr_t));
         if (!checked_freed) return;
         *freed_history = checked_freed;
     }
-    (*freed_history)[(*count)++] = root->mem_id;
+
+    (*freed_history)[(*count)++] = root_id;
 
     if (root->str_val) free(root->str_val);
     if (root->arr_vals) {
