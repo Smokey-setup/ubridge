@@ -13,7 +13,7 @@ Traditional software architectures suffer from two historic pain points when mic
 
 --- 
 
-## 🛠️ Prerequisites & Native Compilation 
+## Prerequisites & Native Compilation 
 
 Before your high-level language runtime can call the interface core, you must compile the C source files into a shared machine binary matching your server operating system. 
 
@@ -31,8 +31,8 @@ This automatically compiles the shared module based on your active host environm
  * **Linux**: Generates libubridge.so
  * **macOS**: Generates libubridge.dylib
  * **Windows**: Generates ubridge.dll
-## 🧬 Core API Engine Interface Mapping
-Your library exposes simple doors to manage complex data structures directly inside system memory:
+## Core API Engine Interface Mapping
+The library exposes simple doors to manage complex data structures directly inside system memory:
  * **ub_create(uint8_t type)**: Allocates an isolated, type-specific data node block onto the system heap.
  * **ub_int(UNode* node, int64_t val)**: Formats and locks a 64-bit integer into a network-byte-order structure.
  * **ub_float(UNode* node, double val)**: Converts values into an integer-scaled fixed-point tracking register, defeating precision drift.
@@ -42,7 +42,7 @@ Your library exposes simple doors to manage complex data structures directly ins
  * **ub_process(UNode* root)**: Encodes the structural data graph into a payload string featuring cyclic protection and an FNV-1a tamper signature.
  * **ub_free(UNode* root)**: Recursively destroys object graphs while protecting the engine against double-free system crashes.
  * **ub_string_free(char* ptr)**: Reclaims the explicit string buffer allocated by ub_process to guarantee a **0% memory leak** runtime footprint.
-## 💻 Language Execution Blueprints
+## Language Execution Blueprints
 Every major programming language in modern computing history can tap directly into the compiled native binary using built-in Foreign Function Interfaces (FFI).
 ### 1. Python (via ctypes)
 **Human Explanation**: Python loads the binary, configures explicit voice channels via ctypes pointers, streams raw decimal tracking info, and safely clears the string allocation memory cache when printed.
