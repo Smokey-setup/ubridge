@@ -344,7 +344,7 @@ class UBridge {
       }
       return objNode;
     }
-    return new UBridge(TYPES.NULL);
+    throw new TypeError(`[@set-up/ubridge] Unsupported JavaScript type: ${typeof data}`);
   }
 }
 

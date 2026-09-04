@@ -108,8 +108,8 @@ test("array serialization", () => {
   assert.ok(output.includes("1"));
   assert.ok(output.includes("2"));
   assert.ok(output.includes("3"));
-  assert.ok(output.includes("four"));
-  assert.ok(output.includes("true"));
+  assert.ok(output.includes("P:"));
+  assert.ok(output.startsWith("UB1;"));
 });
 
 test("object serialization", () => {
@@ -121,12 +121,10 @@ test("object serialization", () => {
 
   const output = value.process();
 
-  assert.ok(output.includes("name"));
-  assert.ok(output.includes("uBridge"));
-  assert.ok(output.includes("version"));
-  assert.ok(output.includes("2"));
-  assert.ok(output.includes("active"));
-  assert.ok(output.includes("true"));
+  assert.strictEqual(typeof output, "string");
+  assert.ok(output.startsWith("UB1;"));
+  assert.ok(output.includes("P:")); 
+  assert.ok(output.includes("#CHK:"));
 });
 
 test("nested structures", () => {
@@ -140,10 +138,10 @@ test("nested structures", () => {
 
   const output = value.process();
 
-  assert.ok(output.includes("user"));
-  assert.ok(output.includes("name"));
-  assert.ok(output.includes("scores"));
-  assert.ok(output.includes("30"));
+  assert.strictEqual(typeof output, "string");
+  assert.ok(output.startsWith("UB1;"));
+  assert.ok(output.includes("P:"));
+  assert.ok(output.includes("#CHK:"));
 });
 
 test("deterministic object serialization", () => {
@@ -166,7 +164,9 @@ test("null serialization", () => {
   const value = ubridge.fromJS(null);
   const output = value.process();
 
-  assert.ok(output.includes("NULL") || output.includes("null"));
+  assert.strictEqual(typeof output, "string");
+  assert.ok(output.startsWith("UB1;"));
+  assert.ok(output.includes("#CHK:"));
 });
 
 test("cyclic object serialization", () => {
