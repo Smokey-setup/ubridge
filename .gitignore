@@ -1,0 +1,4 @@
+node_modules/
+ubridge/*.so
+ubridge/*.dll
+ubridge/*.dylib

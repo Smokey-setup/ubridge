@@ -1,50 +1,113 @@
 import os
 import re
-from setuptools import setup, find_packages
+from pathlib import Path
+
+from setuptools import find_packages, setup
 from setuptools.dist import Distribution
 
+
 class BinaryDistribution(Distribution):
-    """Force wheel builder to treat this as a platform-specific binary distribution."""
+    """
+    Mark the distribution as platform-specific because uBridge
+    contains native C shared libraries.
+    """
+
     def has_ext_modules(self):
         return True
 
-# 1. Dynamically read the long description from README.md
-here = os.path.abspath(os.path.dirname(__file__))
-try:
-    with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
-        long_description = f.read()
-except FileNotFoundError:
-    long_description = ""
 
-# 2. Dynamically extract version from ubridge/__init__.py
+HERE = Path(__file__).resolve().parent
+
+
+def read_readme():
+    """
+    Load README.md when present.
+    """
+    readme = HERE / "README.md"
+
+    if not readme.is_file():
+        return ""
+
+    return readme.read_text(encoding="utf-8")
+
+
 def get_version():
-    init_path = os.path.join(here, "ubridge", "__init__.py")
-    try:
-        with open(init_path, "r", encoding="utf-8") as f:
-            match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M)
-            if match:
-                return match.group(1)
-    except FileNotFoundError:
-        pass
-    return "2.0.0"  # Upgraded fallback version reflecting the Universal Mathematical Operating Layer
+    """
+    Read the package version from ubridge/__init__.py.
+
+    A missing or malformed version is a packaging error and must
+    fail the build rather than silently producing an incorrect
+    release.
+    """
+
+    init_path = HERE / "ubridge" / "__init__.py"
+
+    if not init_path.is_file():
+        raise RuntimeError(
+            "Cannot determine ubridge version: "
+            "ubridge/__init__.py is missing."
+        )
+
+    content = init_path.read_text(encoding="utf-8")
+
+    match = re.search(
+        r"^__version__\s*=\s*[\"']([^\"']+)[\"']\s*$",
+        content,
+        re.MULTILINE,
+    )
+
+    if not match:
+        raise RuntimeError(
+            "Cannot determine ubridge version: "
+            "__version__ is missing from ubridge/__init__.py."
+        )
+
+    version = match.group(1).strip()
+
+    if not version:
+        raise RuntimeError(
+            "Cannot determine ubridge version: "
+            "__version__ is empty."
+        )
+
+    return version
+
 
 setup(
     name="ubridge",
     version=get_version(),
-    description="Universal Mathematical Operating Layer resolving IEEE 754 float drift, zero-copy atomic SPSC shared memory IPC, and hybrid precision across polyglot microservices.",
-    long_description=long_description,
+
+    description=(
+        "Universal Mathematical Operating Layer with deterministic "
+        "serialization, fixed-point numeric handling, scientific "
+        "precision, cyclic graph support, and a hardened native C ABI."
+    ),
+
+    long_description=read_readme(),
     long_description_content_type="text/markdown",
+
     author="Smokey-setup",
-    
-    # 3. Dynamically find packages instead of hardcoding ["ubridge"]
-    packages=find_packages(include=["ubridge", "ubridge.*"]),
-    
-    package_data={
-        # 4. Dynamically match any binary shared libraries in the package directory
-        "ubridge": ["*.so", "*.dylib", "*.dll"]
-    },
+    license="MIT",
+
+    packages=find_packages(
+        include=[
+            "ubridge",
+            "ubridge.*",
+        ]
+    ),
+
     include_package_data=True,
+
+    package_data={
+        "ubridge": [
+            "*.so",
+            "*.dylib",
+            "*.dll",
+        ]
+    },
+
     distclass=BinaryDistribution,
+
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
@@ -53,4 +116,6 @@ setup(
         "Operating System :: MacOS",
         "Operating System :: Microsoft :: Windows",
     ],
+
+    python_requires=">=3.9",
 )

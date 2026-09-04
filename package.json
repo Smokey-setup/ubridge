@@ -1,8 +1,9 @@
 {
   "name": "@set-up/ubridge",
   "version": "2.0.0",
-  "description": "Universal Mathematical Operating Layer solving IEEE 754 float drift, zero-copy atomic SPSC shared memory IPC, and hybrid precision across polyglot microservices.",
+  "description": "Universal Mathematical Operating Layer with deterministic serialization, fixed-point numeric handling, scientific precision, cyclic graph support, and a native C ABI.",
   "main": "index.js",
+  "type": "commonjs",
   "files": [
     "index.js",
     "ubridge.h",
@@ -14,7 +15,8 @@
   ],
   "scripts": {
     "build": "make",
-    "test": "node test.js"
+    "test": "node test.js",
+    "pretest": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -24,17 +26,20 @@
     "ffi",
     "serialization",
     "ieee754",
+    "fixed-point",
+    "scientific-notation",
     "cross-platform",
-    "performance",
     "native",
-    "shared-memory",
-    "spsc",
-    "hybrid-precision",
+    "cyclic-data",
+    "deterministic",
     "fintech",
     "microservices"
   ],
   "author": "Smokey-setup",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@napi-ffi/ffi-napi": "^4.0.7"
   },
