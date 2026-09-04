@@ -185,6 +185,9 @@ class UBridge {
     if (typeof value !== 'string') {
       value = String(value);
     }
+    if (value.includes('\0')) {
+      throw new TypeError('[@set-up/ubridge] String cannot contain embedded NUL bytes.');
+    }
     native.ub_str(this.ptr, value);
     return this;
   }
@@ -194,7 +197,8 @@ class UBridge {
    * ======== */
   setBool(value) {
     this._checkAlive();
-    native.ub_int(this.ptr, value ? 1n : 0n);
+    const intval = value ? 1n : 0n;
+    native.ub_int(this.ptr, toInt64(intval, 'boolean'));
     return this;
   }
 
