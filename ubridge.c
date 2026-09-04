@@ -225,9 +225,9 @@ static int append_fmt(
     return 1;
 }
 
-/* ============================================================
+/* =============
  * NODE CREATION
- * ============================================================ */
+ * ============= */
 
 UBRIDGE_API UNode* UBRIDGE_CALL
 ub_create(uint8_t type)
@@ -274,9 +274,9 @@ ub_create(uint8_t type)
     return node;
 }
 
-/* ============================================================
+/* =======
  * INTEGER
- * ============================================================ */
+ * ======= */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_int(
@@ -302,9 +302,9 @@ ub_int(
         UB_MODE_FIXED;
 }
 
-/* ============================================================
- * FIXED-POINT FLOAT
- * ============================================================ */
+/* ============
+ * POINT FLOAT
+ * ============ */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_float(
@@ -391,9 +391,9 @@ ub_float(
     node->scientific_exp = 0;
 }
 
-/* ============================================================
+/* ========
  * STRING
- * ============================================================ */
+ * ======== */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_str(
@@ -420,9 +420,9 @@ ub_str(
     node->type = U_STRING;
 }
 
-/* ============================================================
+/* =======
  * ARRAY
- * ============================================================ */
+ * ======= */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_array(
@@ -476,9 +476,9 @@ ub_array(
         next_len;
 }
 
-/* ============================================================
+/* =======
  * OBJECT
- * ============================================================ */
+ * ======= */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_object(
@@ -597,9 +597,9 @@ ub_object(
         next_len;
 }
 
-/* ============================================================
+/* =======
  * BASE64
- * ============================================================ */
+ * ======= */
 
 static char* u_pack(
     const char* input,
@@ -709,9 +709,9 @@ static char* u_pack(
     return res;
 }
 
-/* ============================================================
+/* ================
  * FNV-1a CHECKSUM
- * ============================================================ */
+ * ================ */
 
 static uint32_t compute_fnv1a(
     const char* data,
@@ -738,9 +738,9 @@ static uint32_t compute_fnv1a(
     return hash;
 }
 
-/* ============================================================
+/* =====================
  * SERIALIZATION HISTORY
- * ============================================================ */
+ * ===================== */
 
 static int history_contains(
     const uintptr_t* history,
@@ -823,9 +823,9 @@ static int history_reserve(
     return 1;
 }
 
-/* ============================================================
+/* ==========
  * SERIALIZER
- * ============================================================ */
+ * =========== */
 
 static int u_serialize(
     const UNode* node,
@@ -1281,9 +1281,9 @@ static int u_serialize(
     }
 }
 
-/* ============================================================
+/* ========
  * PROCESS
- * ============================================================ */
+ * ======== */
 
 UBRIDGE_API char* UBRIDGE_CALL
 ub_process(UNode* root)
@@ -1381,9 +1381,9 @@ ub_process(UNode* root)
     return buf;
 }
 
-/* ============================================================
+/* ==========
  * FREE GRAPH
- * ============================================================ */
+ * ========== */
 
 static int pointer_seen(
     UNode** nodes,
@@ -1406,13 +1406,17 @@ static int collect_node(
     UNode* node,
     UNode*** nodes,
     size_t* count,
-    size_t* capacity
+    size_t* capacity,
+    size_t depth
 )
 {
     size_t i;
 
     if (!node) {
         return 1;
+    }
+    if (depth >= 512) {
+        return 0;                
     }
 
     if (pointer_seen(
@@ -1494,7 +1498,8 @@ static int collect_node(
             node->arr_vals[i],
             nodes,
             count,
-            capacity
+            capacity,
+            depth + 1
         )) {
             return 0;
         }
@@ -1509,7 +1514,8 @@ static int collect_node(
             node->obj_vals[i],
             nodes,
             count,
-            capacity
+            capacity,
+            depth + 1
         )) {
             return 0;
         }
@@ -1518,9 +1524,9 @@ static int collect_node(
     return 1;
 }
 
-/* ============================================================
+/* =====
  * FREE
- * ============================================================ */
+ * ===== */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_free(UNode* root)
@@ -1546,7 +1552,8 @@ ub_free(UNode* root)
         root,
         &nodes,
         &count,
-        &capacity
+        &capacity,
+        0
     )) {
         free(nodes);
         return;
@@ -1602,9 +1609,9 @@ ub_free(UNode* root)
     free(nodes);
 }
 
-/* ============================================================
+/* =================
  * STRING ALLOCATION RELEASE
- * ============================================================ */
+ * ================= */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_string_free(char* ptr)
@@ -1612,9 +1619,9 @@ ub_string_free(char* ptr)
     free(ptr);
 }
 
-/* ============================================================
+/* ====================
  * SCIENTIFIC PRECISION
- * ============================================================ */
+ * ==================== */
 
 UBRIDGE_API void UBRIDGE_CALL
 ub_scientific(

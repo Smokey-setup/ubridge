@@ -115,8 +115,9 @@ function toInt32(value, name = 'value') {
  * ============ */
 const gcRegistry = new FinalizationRegistry((ptr) => {
   try {
-    if (isValidPointer(ptr)) {
+    if (state && isValidPointer(state.ptr)) {
       native.ub_free(ptr);
+      state.ptr = null;
     }
   } catch (_) {
     /* Finalizers must never allow an exception to escape. */
@@ -136,9 +137,10 @@ class UBridge {
       throw new Error('[@set-up/ubridge] Native ub_create() failed.');
     }
     this.ptr = ptr;
+    this._gcState = { ptr };
     this.isFreed = false;
     this._type = type;
-    gcRegistry.register(this, ptr, this);
+    gcRegistry.register(this, this._gcState, this);
   }
 
   get type() {
@@ -284,10 +286,15 @@ class UBridge {
     if (this.isFreed) {
       return;
     }
+    const state = this._gcState;
+    this._gcState = null;
     const ptr = this.ptr;
     this.ptr = null;
     this.isFreed = true;
     gcRegistry.unregister(this);
+    if (state) {
+      state.ptr = null;
+    }
     if (isValidPointer(ptr)) {
       native.ub_free(ptr);
     }
