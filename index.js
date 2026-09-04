@@ -84,7 +84,7 @@ function toInt64(value, name = 'value') {
     if (value < INT64_MIN || value > INT64_MAX) {
       throw new RangeError(`[@set-up/ubridge] ${name} is outside int64 range.`);
     }
-    return value;
+    return value.toString();
   }
   if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value)) {
     throw new TypeError(`[@set-up/ubridge] ${name} must be an integer Number or BigInt.`);
@@ -94,7 +94,7 @@ function toInt64(value, name = 'value') {
       `[@set-up/ubridge] ${name} exceeds JavaScript's safe integer range. Use BigInt instead.`
     );
   }
-  return BigInt(value);
+  return value;
 }
 
 /* =============================
@@ -314,7 +314,7 @@ class UBridge {
     }
     if (typeof data === 'number') {
       if (!Number.isFinite(data)) {
-        return new UBridge(TYPES.NULL);
+        throw new TypeError('[@set-up/ubridge] Number must be finite.');
       }
       if (Number.isInteger(data)) {
         return new UBridge(TYPES.INT).setInt(data);
@@ -349,6 +349,7 @@ class UBridge {
  * ========= */
 module.exports = {
   UBridge,
+  fromJS: (data, seen) => UBridge.fromJS(data, seen),
   TYPES,
   MODES,
   createNode: (type) => new UBridge(type),

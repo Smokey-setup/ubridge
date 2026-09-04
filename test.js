@@ -75,7 +75,7 @@ test("string serialization", () => {
   const value = ubridge.fromJS("hello uBridge");
   const output = value.process();
 
-  assert.ok(output.includes("hello uBridge"));
+  assert.ok(output.includes("P:13:aGVsbG8gdUJyaWRnZQ=="));
 });
 
 test("embedded NUL string is rejected", () => {
